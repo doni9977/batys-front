@@ -90,7 +90,7 @@ function AiPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
-  const [selectedIndicator, setSelectedIndicator] = useState(meta.algorithms[0].id);
+  const [selectedIndicator, setSelectedIndicator] = useState<string>(meta.algorithms[0].id);
   const [selectedSeverity, setSelectedSeverity] = useState<(typeof severityOptions)[number]["value"]>("all");
   
   // Pagination State
@@ -150,7 +150,7 @@ function AiPage() {
 
       const detailText = (() => {
         const ind = risk.indicator;
-        const d = risk.details;
+        const d = risk.details as any;
         
         if (ind === "A1" || ind === "A2") {
           return `${d?.reason || "Нарушение"}: Пациенту ${d?.patient_age || "—"} лет, Пол: ${d?.patient_gender || "—"}`;
@@ -182,6 +182,21 @@ function AiPage() {
         if (ind === "NR4") {
           return `${d?.reason}. Заявленный уставной капитал: ${d?.authorized_capital} ₸ (порог ${d?.threshold} ₸). Вид деятельности: ${d?.activity_type}`;
         }
+                if (ind === "S1") {
+          return `Услуга "${d?.service_name || "—"}" оказана в поликлинике ${d?.service_date}, когда пациент находился в стационаре (${d?.admission_date} — ${d?.discharge_date}). Физически невозможно.`;
+        }
+        if (ind === "S2") {
+          return `Повторная госпитализация через ${d?.gap_days} дн. с тем же диагнозом (${d?.icd10_code}). Предыдущая выписка: ${d?.prev_discharge}, новое поступление: ${d?.new_admission_date}. Признак дробления случая.`;
+        }
+        if (ind === "S3") {
+          return `Круглосуточный стационар при пребывании ${d?.bed_days} койко-дн. — дорогой тариф не соответствует сроку. Диагноз: ${d?.diagnosis || "—"} (${d?.icd10_code}).`;
+        }
+        if (ind === "S4") {
+          return `${d?.reason}. Врач: ${risk.doctor_name}, отделение: ${d?.department}. Экстренных ${d?.emergency_patients} из ${d?.total_patients} (${d?.emergency_percent}%).`;
+        }
+        if (ind === "S5") {
+          return `Услуга "${d?.service_name || "—"}" оказана в поликлинике ${d?.service_date}, после зафиксированной даты смерти пациента (${d?.death_date}).`;
+        }
         return `${meta.doctorLabel} ${risk.doctor_name || clinicName} нарушил правила`;
       })();
 
@@ -193,7 +208,7 @@ function AiPage() {
         severity: getSeverity(risk.indicator, amount),
         organization: clinicName,
         doctor: risk.doctor_name || "—",
-        patient: risk.patient_iin || "—",
+        patient: risk.patient_iin || (risk.details as any)?.patient_name || "—",
         date: risk.risk_date || "—",
         amount,
         detailText,

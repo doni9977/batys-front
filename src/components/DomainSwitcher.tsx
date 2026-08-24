@@ -1,5 +1,5 @@
-import { Stethoscope, Building2, Lock } from "lucide-react";
-import { useDomain, DOMAIN_META, type Domain } from "../lib/domain";
+import { Stethoscope, Building2 } from "lucide-react";
+import { useDomain, type Domain } from "../lib/domain";
 
 export function DomainSwitcher() {
   const { domain, setDomain } = useDomain();
@@ -26,6 +26,14 @@ export function DomainSwitcher() {
       sub: "Фиктивные ЮЛ",
       icon: Building2,
       active: "border-violet-500/50 bg-gradient-to-br from-violet-500/15 to-purple-600/10 text-violet-300 shadow-[0_0_20px_-6px_rgba(167,139,250,0.4)]",
+      idle: "border-border bg-surface text-subtle hover:bg-surface-2 hover:text-body hover:border-border-subtle",
+    },
+    {
+      id: "inpatient",
+      label: "Стационар",
+      sub: "Больницы",
+      icon: Building2,
+      active: "border-emerald-500/50 bg-gradient-to-br from-emerald-500/15 to-green-600/10 text-emerald-300 shadow-[0_0_20px_-6px_rgba(16,185,129,0.4)]",
       idle: "border-border bg-surface text-subtle hover:bg-surface-2 hover:text-body hover:border-border-subtle",
     },
   ];
@@ -62,21 +70,6 @@ export function DomainSwitcher() {
           </button>
         );
       })}
-
-      {/* Кейс 3 — заглушка */}
-      <button
-        disabled
-        className="flex cursor-not-allowed items-center gap-3 rounded-xl border border-border/50 bg-surface/50 px-4 py-3 opacity-50"
-      >
-        <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg border border-border bg-surface-2">
-          <Lock className="h-4 w-4 text-subtle" />
-        </span>
-        <div>
-          <p className="text-sm font-semibold text-subtle">Кейс 3</p>
-          <p className="text-xs text-subtle">Скоро</p>
-        </div>
-      </button>
     </div>
   );
 }
-

@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, type ReactNode } from "react";
 
-export type Domain = "osms" | "nr";
+export type Domain = "osms" | "nr" | "inpatient";
 
 export type DomainContextType = {
   domain: Domain;
@@ -86,6 +86,26 @@ export const DOMAIN_META = {
       { id: "nr2", label: "NR2: Транзитный туризм", desc: "Групповой ввоз номиналов" },
       { id: "nr3", label: "NR3: Аффилированные сети", desc: "Нотариус+переводчик 3+ компаний" },
       { id: "nr4", label: "NR4: Финансовая пустышка", desc: "УК ниже порога 100 000 ₸" },
+    ],
+  },
+    inpatient: {
+    id: "inpatient" as Domain,
+    label: "Стационар",
+    sublabel: "Больницы",
+    emoji: "🏨",
+    color: "from-emerald-500/20 to-green-500/10 border-emerald-500/30 text-emerald-400",
+    activeColor: "bg-gradient-to-r from-emerald-500/20 to-green-600/10 border-emerald-500/40",
+    clinicLabel: "Стационар",
+    doctorLabel: "Врач",
+    iinLabel: "Пациент",
+    uploadLabel: "Загрузить файлы стационара",
+    uploadEndpoint: "/api/upload-inpatient",
+    algorithms: [
+      { id: "s1", label: "S1: Кросс-чек", desc: "Пересечение стационара и поликлиники" },
+      { id: "s2", label: "S2: Дробление", desc: "Дробление госпитализаций" },
+      { id: "s3", label: "S3: Круглосуточный", desc: "Фиктивный круглосуточный стационар" },
+      { id: "s4", label: "S4: Экстренные", desc: "Аномалия экстренной госпитализации" },
+      { id: "s5", label: "S5: После смерти", desc: "Услуги после смерти пациента" },
     ],
   },
 } as const;
