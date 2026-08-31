@@ -4,8 +4,6 @@ import {
   BarChart3,
   Building2,
   Sparkles,
-  Settings,
-  Download,
   ShieldCheck,
   Menu,
 } from "lucide-react";
@@ -20,10 +18,7 @@ const mainNav: NavItem[] = [
   { to: "/ai", label: "ИИ-Аналитик", icon: Sparkles },
 ];
 
-const sysNav: NavItem[] = [
-  { to: "/access", label: "Управление доступами", icon: Settings },
-  { to: "/integrations", label: "Интеграции", icon: Download },
-];
+
 
 function NavLink({ item, active, isCollapsed }: { item: NavItem; active: boolean; isCollapsed: boolean }) {
   const Icon = item.icon;
@@ -85,14 +80,6 @@ export function Sidebar({ isCollapsed, onToggle }: { isCollapsed: boolean; onTog
           ))}
         </div>
 
-        <div className={`mt-6 px-2 pb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-subtle ${isCollapsed ? 'hidden' : ''}`}>
-          Система
-        </div>
-        <div className="space-y-1">
-          {sysNav.map((i) => (
-            <NavLink key={i.to} item={i} active={isActive(i.to)} isCollapsed={isCollapsed} />
-          ))}
-        </div>
       </nav>
 
     </aside>

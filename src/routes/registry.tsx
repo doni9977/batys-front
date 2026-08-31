@@ -32,7 +32,12 @@ export const Route = createFileRoute("/registry")({
 // > 5 000 000 ₸ → Высокий
 type RiskLevel = "high" | "medium" | "low";
 
-function getRiskLevel(amount: number): RiskLevel {
+function getRiskLevel(amount: number, totalRisks: number, domainId: string): RiskLevel {
+  if (domainId === "nr") {
+    if (totalRisks >= 4) return "high";
+    if (totalRisks >= 2) return "medium";
+    return "low";
+  }
   if (amount > 5_000_000) return "high";
   if (amount > 500_000) return "medium";
   return "low";
@@ -64,14 +69,14 @@ function fmt(n: number) {
 }
 
 // Экспорт CSV
-function exportCsv(subjects: RegistrySubject[]) {
+function exportCsv(subjects: RegistrySubject[], domainId: string) {
   const header = ["#", "Название", "БИН", "Район", "Уровень риска", "Сумма ущерба (₸)", "Нарушений"];
   const rows = subjects.map((s, i) => [
     i + 1,
     `"${s.clinic_name}"`,
     "-",
     "-",
-    RISK_META[getRiskLevel(s.total_amount)].label,
+    RISK_META[getRiskLevel(s.total_amount, s.total_risks, domainId)].label,
     s.total_amount.toFixed(2),
     s.total_risks,
   ]);
@@ -130,9 +135,9 @@ function RegistryPage() {
   const slice = filtered.slice((page - 1) * perPage, page * perPage);
 
   // Статистика
-  const totalHigh = subjects.filter((s) => getRiskLevel(s.total_amount) === "high").length;
-  const totalMedium = subjects.filter((s) => getRiskLevel(s.total_amount) === "medium").length;
-  const totalLow = subjects.filter((s) => getRiskLevel(s.total_amount) === "low").length;
+  const totalHigh = subjects.filter((s) => getRiskLevel(s.total_amount, s.total_risks, meta.id) === "high").length;
+  const totalMedium = subjects.filter((s) => getRiskLevel(s.total_amount, s.total_risks, meta.id) === "medium").length;
+  const totalLow = subjects.filter((s) => getRiskLevel(s.total_amount, s.total_risks, meta.id) === "low").length;
 
   return (
     <>
@@ -141,7 +146,7 @@ function RegistryPage() {
         subtitle={`${subjects.length} организаций в реестре`}
         right={
           <button
-            onClick={() => exportCsv(subjects)}
+            onClick={() => exportCsv(subjects, meta.id)}
             className="flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-sm text-body hover:bg-surface-2 transition-colors"
           >
             <Download className="h-4 w-4" /> Экспорт CSV
@@ -230,7 +235,7 @@ function RegistryPage() {
                   </tr>
                 ) : (
                   slice.map((row, idx) => {
-                    const level = getRiskLevel(row.total_amount);
+                    const level = getRiskLevel(row.total_amount, row.total_risks, meta.id);
                     const m = RISK_META[level];
                     return (
                       <tr

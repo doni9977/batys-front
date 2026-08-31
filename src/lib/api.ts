@@ -73,7 +73,8 @@ export type RisksResponse = {
 
 export const uploadFile = async (file: File, endpoint: string = "/api/upload"): Promise<UploadResponse> => {
   const formData = new FormData();
-  formData.append("file", file);
+  const fieldName = endpoint.includes("inpatient") ? "files" : "file";
+  formData.append(fieldName, file);
 
   const response = await fetch(endpoint, {
     method: "POST",

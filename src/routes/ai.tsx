@@ -146,58 +146,82 @@ function AiPage() {
   const anomalies = useMemo<Anomaly[]>(() => {
     return risks.map((risk, index) => {
       const amount = Number(risk.amount || 0);
-      const clinicName = risk.clinic_name || "Неизвестная клиника";
+      const clinicName = risk.clinic_name || "Неизвестно";
+      
+
 
       const detailText = (() => {
         const ind = risk.indicator;
         const d = risk.details as any;
+        const docName = risk.doctor_name ? `Врач ${risk.doctor_name}: ` : "";
         
         if (ind === "A1" || ind === "A2") {
-          return `${d?.reason || "Нарушение"}: Пациенту ${d?.patient_age || "—"} лет, Пол: ${d?.patient_gender || "—"}`;
+          return `${docName}${d?.reason || "Нарушение"}: Пациенту ${d?.patient_age || "—"} лет, Пол: ${d?.patient_gender || "—"}`;
         }
         if (ind === "A3") {
-          return `Врач оказал ${d?.service_count} услуг за час (норма ${d?.threshold}) и ${d?.daily_count} услуг за день (норма 200)`;
+          return `${docName}оказал ${d?.service_count} услуг за час (норма ${d?.threshold}) и ${d?.daily_count} услуг за день (норма 200)`;
         }
         if (ind === "A4") {
-          return `Услуга оказана ${d?.total_count} раз за день (ограничение: ${d?.allowed_per_day} в день)`;
+          return `${docName}Услуга оказана ${d?.total_count} раз за день (ограничение: ${d?.allowed_per_day} в день)`;
         }
         if (ind === "A7") {
-          return `За год услуга оказана ${d?.total_quantity} раз (годовой лимит: ${d?.allowed_per_year})`;
+          return `${docName}За год услуга оказана ${d?.total_quantity} раз (годовой лимит: ${d?.allowed_per_year})`;
         }
         if (ind === "A8") {
-          return `Завышение стоимости: сумма к оплате ${d?.actual_amount} ₸ (макс. тариф с учетом количества: ${d?.allowed_amount} ₸). Разница: ${d?.excess_amount} ₸`;
+          return `${docName}Завышение стоимости: сумма к оплате ${d?.actual_amount} ₸ (макс. тариф с учетом количества: ${d?.allowed_amount} ₸). Разница: ${d?.excess_amount} ₸`;
         }
         if (ind === "A10") {
-          return `Интервал между услугами составил ${d?.actual_interval_minutes} мин (норматив ${d?.required_interval_minutes} мин). Предыдущая услуга: ${d?.previous_service_name || "—"}`;
+          return `${docName}Интервал между услугами составил ${d?.actual_interval_minutes} мин (норматив ${d?.required_interval_minutes} мин). Предыдущая услуга: ${d?.previous_service_name || "—"}`;
         }
         if (ind === "NR1") {
-          return `${d?.reason}. Регистрация ТОО "${d?.company_name}" (БИН: ${d?.bin}). Дата рег: ${d?.reg_date}.`;
+          return `Справка по результатам аналитической работы. Установлено, что ${d?.reg_date || new Date(risk.risk_date).toLocaleDateString()} года было зарегистрировано ${d?.company_name} (БИН: ${d?.bin}). Руководителем и учредителем выступает нерезидент — ${d?.director_name} (ИИН/Паспорт: ${d?.director_iin || "нет данных"}).
+
+В ходе сопоставления сведений с базами данных ПС КНБ РК установлено, что указанный гражданин не пересекал государственную границу Республики Казахстан в период государственной регистрации юридического лица.
+Процедура регистрации осуществлялась дистанционно с использованием доверенностей. Вышеуказанные факты свидетельствуют о фиктивном характере создания юридического лица без намерений осуществлять фактическое руководство компанией.`;
         }
         if (ind === "NR2") {
-          return `${d?.reason}. Пребывание ${d?.stay_days} дн. ГРНЗ авто: ${d?.vehicle_plate}. КПП: ${d?.crossing_point}. Ввезено номиналов на данном авто: ${d?.shared_plate_count}.`;
+          return `Справка по результатам аналитической работы. Установлено, что ${new Date(risk.risk_date).toLocaleDateString()} года на имя нерезидента ${d?.director_name} (ИИН/Паспорт: ${d?.director_iin || "нет данных"}) зарегистрировано ${d?.company_name} (БИН: ${d?.bin}).
+
+Изучением сведений о пересечении государственной границы установлено, что ${d?.entry_date} указанное лицо осуществило въезд в РК через пост «${d?.crossing_point}» на транспортном средстве (ГРНЗ: ${d?.vehicle_plate}). Выезд осуществлен ${d?.exit_date} на том же автомобиле. Срок пребывания на территории РК составил ${d?.stay_days} дней.
+Дополнительно установлено, что на указанном транспортном средстве границу пересекали и иные нерезиденты с целью массовой регистрации юридических лиц, что указывает на организованный ввоз номинальных руководителей.`;
         }
         if (ind === "NR3") {
-          return `${d?.reason}. Нотариус: ${d?.notary}, Переводчик: ${d?.translator}. Зарегистрировали вместе ${d?.pair_count} компаний нерезидентов.`;
+          return `Справка по результатам аналитической работы. В ходе проведения анализа выявлена группа аффилированных лиц, оказывающих посреднические услуги по массовой регистрации компаний в интересах нерезидентов.
+
+Так, при регистрации ${d?.company_name} (БИН: ${d?.bin}), учредителем которого является ${d?.director_name}, перевод документов и регистрационные действия осуществляло лицо: ${d?.translator}. Нотариальные действия удостоверены нотариусом: ${d?.notary}.
+
+Установлено, что указанные лица неоднократно (более ${d?.pair_count} раз) выступали посредниками при регистрации иных рисковых юридических лиц, оформленных на нерезидентов. Данный механизм позволяет нерезидентам создавать юридические лица конвейерным способом, что создает предпосылки для их использования в противоправных схемах.`;
         }
         if (ind === "NR4") {
-          return `${d?.reason}. Заявленный уставной капитал: ${d?.authorized_capital} ₸ (порог ${d?.threshold} ₸). Вид деятельности: ${d?.activity_type}`;
+          return `Справка по результатам аналитической работы. Изучением финансово-хозяйственной деятельности ${d?.company_name} (БИН: ${d?.bin}), зарегистрированного на нерезидента ${d?.director_name}, установлены признаки фиктивности.
+
+По данным информационных систем КГД МФ РК, у товарищества отсутствуют обороты по приобретению и реализации товаров, работ и услуг, налоги не уплачивались (либо уплачены в минимальном размере: 0 тенге), количество работников составляет 0 человек.
+
+При этом, согласно банковским выпискам, обороты по счетам компании носят аномальный характер и составляют: более 100 млн тенге. Поступившие средства конвертируются и выводятся за рубеж. Фактический импорт, экспорт и налоговые отчисления отсутствуют, компания фактически является бездействующей. Уставной капитал: ${d?.authorized_capital} ₸.`;
         }
-                if (ind === "S1") {
-          return `Услуга "${d?.service_name || "—"}" оказана в поликлинике ${d?.service_date}, когда пациент находился в стационаре (${d?.admission_date} — ${d?.discharge_date}). Физически невозможно.`;
+        if (ind === "NR5") {
+          return `Справка по результатам аналитической работы. Установлено, что ${d?.company_name} (БИН: ${d?.bin}) под руководством нерезидента ${d?.director_name} осуществляет вывод валютных ценностей за пределы Республики Казахстан.
+
+Товариществом заключен международный контракт от ${new Date(risk.risk_date).toLocaleDateString()} с нерезидентом на поставку товаров. Товарищество осуществило перевод денежных средств в адрес нерезидента на крупную сумму (Баланс счета: ${d?.balance || 0} ₸).
+
+При этом, по данным таможенных систем, фактическая поставка товара на территорию РК не осуществлена, возврат денежных средств не произведен. Вышеуказанные факты указывают на признаки уголовного правонарушения, предусмотренного ст. 235-1 УК РК (Незаконный вывод валютных ценностей).`;
+        }
+        if (ind === "S1") {
+          return `${docName}Услуга "${d?.service_name || "—"}" оказана в поликлинике ${d?.service_date}, когда пациент находился в стационаре (${d?.admission_date} — ${d?.discharge_date}). Физически невозможно.`;
         }
         if (ind === "S2") {
-          return `Повторная госпитализация через ${d?.gap_days} дн. с тем же диагнозом (${d?.icd10_code}). Предыдущая выписка: ${d?.prev_discharge}, новое поступление: ${d?.new_admission_date}. Признак дробления случая.`;
+          return `${docName}Повторная госпитализация через ${d?.gap_days} дн. с тем же диагнозом (${d?.icd10_code}). Предыдущая выписка: ${d?.prev_discharge}, новое поступление: ${d?.new_admission_date}. Признак дробления случая.`;
         }
         if (ind === "S3") {
-          return `Круглосуточный стационар при пребывании ${d?.bed_days} койко-дн. — дорогой тариф не соответствует сроку. Диагноз: ${d?.diagnosis || "—"} (${d?.icd10_code}).`;
+          return `${docName}Круглосуточный стационар при пребывании ${d?.bed_days} койко-дн. — дорогой тариф не соответствует сроку. Диагноз: ${d?.diagnosis || "—"} (${d?.icd10_code}).`;
         }
         if (ind === "S4") {
           return `${d?.reason}. Врач: ${risk.doctor_name}, отделение: ${d?.department}. Экстренных ${d?.emergency_patients} из ${d?.total_patients} (${d?.emergency_percent}%).`;
         }
         if (ind === "S5") {
-          return `Услуга "${d?.service_name || "—"}" оказана в поликлинике ${d?.service_date}, после зафиксированной даты смерти пациента (${d?.death_date}).`;
+          return `${docName}Услуга "${d?.service_name || "—"}" оказана в поликлинике ${d?.service_date}, после зафиксированной даты смерти пациента (${d?.death_date}).`;
         }
-        return `${meta.doctorLabel} ${risk.doctor_name || clinicName} нарушил правила`;
+        return `${meta?.doctorLabel || "Врач"} ${risk.doctor_name || clinicName} нарушил правила`;
       })();
 
       return {
@@ -333,6 +357,16 @@ function AiPage() {
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
+              <a
+                href={`/api/export/report?indicator=${selectedIndicator}`}
+                target="_blank"
+                rel="noreferrer"
+                className="group relative inline-flex items-center gap-2 overflow-hidden rounded-xl bg-slate-800 px-4 py-2 text-sm font-bold text-white shadow-lg shadow-slate-500/20 transition-all hover:bg-slate-700 dark:bg-white/10 dark:hover:bg-white/20"
+              >
+                <FileText className="h-4 w-4" />
+                <span>Справка (Word)</span>
+              </a>
+
               <label className="group relative cursor-pointer overflow-hidden rounded-xl border border-dashed border-cyan-300/50 bg-cyan-50/50 px-4 py-2 transition-all hover:bg-cyan-50 dark:border-cyan-500/30 dark:bg-cyan-500/10 dark:hover:bg-cyan-500/20">
                 <span className="flex items-center gap-2 text-xs font-semibold text-cyan-700 dark:text-cyan-300">
                   <FileText className="h-4 w-4" />
