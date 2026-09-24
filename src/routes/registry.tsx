@@ -1,8 +1,10 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Search, ChevronLeft, ChevronRight, Download, ArrowUpRight } from "lucide-react";
 import { PageHeader } from "../components/PageHeader";
-import { fetchRisks, type RiskRecord } from "../lib/api";
+import { apiUrl } from "../lib/config";
+import { fetchRegistry } from "../lib/api";
+import { useDomainMeta } from "../lib/domain";
 
 export const Route = createFileRoute("/registry")({
   head: () => ({
@@ -26,6 +28,8 @@ const getRiskLevel = (amount: number): Risk => {
 };
 
 function RegistryPage() {
+  const navigate = useNavigate();
+  const domainMeta = useDomainMeta();
   const [q, setQ] = useState("");
   const [page, setPage] = useState(1);
   const [rows, setRows] = useState<Row[]>([]);
@@ -40,29 +44,16 @@ function RegistryPage() {
       try {
         setIsLoading(true);
         setError("");
-        const response = await fetchRisks("a3");
+        const response = await fetchRegistry(domainMeta.id);
 
         if (!isMounted) return;
 
-        const grouped = new Map<string, { name: string; bin: string; amount: number; count: number }>();
-
-        response.risks.forEach((risk) => {
-          const name = risk.clinic_name?.trim() || "Неизвестная клиника";
-          const record = grouped.get(name) ?? { name, bin: risk.patient_iin || "000000000000", amount: 0, count: 0 };
-          record.amount += Number(risk.amount || 0);
-          record.count += 1;
-          if (!record.bin || record.bin === "000000000000") {
-            record.bin = risk.patient_iin || record.bin;
-          }
-          grouped.set(name, record);
-        });
-
-        const mappedRows: Row[] = Array.from(grouped.values()).map((item) => ({
-          bin: item.bin,
-          name: item.name,
-          district: "Неизвестно",
-          risk: getRiskLevel(item.amount),
-          status: `Найдено нарушений: ${item.count}`,
+        const mappedRows: Row[] = response.subjects.map((subject) => ({
+          bin: subject.bin || "000000000000",
+          name: subject.clinic_name || "Неизвестная клиника",
+          district: subject.district || "Неизвестно",
+          risk: getRiskLevel(Number(subject.total_amount || 0)),
+          status: `Найдено нарушений: ${subject.total_risks}`,
         }));
 
         setRows(mappedRows);
@@ -80,7 +71,7 @@ function RegistryPage() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [domainMeta.id]);
 
   const filtered = useMemo(
     () =>
@@ -98,11 +89,15 @@ function RegistryPage() {
     <>
       <PageHeader
         title="Реестр субъектов"
-        subtitle={`${rows.length} субъектов в реестре`}
+        subtitle={`${rows.length} субъектов в реестре · ${domainMeta.label}`}
         right={
-          <button className="flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-sm text-body hover:bg-surface-2">
-            <Download className="h-4 w-4" /> Экспорт CSV
-          </button>
+          <a
+            href={apiUrl(`/api/export/xlsx?domain=${encodeURIComponent(domainMeta.id)}`)}
+            download
+            className="flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-sm text-body hover:bg-surface-2"
+          >
+            <Download className="h-4 w-4" /> Экспорт XLSX
+          </a>
         }
       />
 
@@ -177,7 +172,13 @@ function RegistryPage() {
                       <td className="px-4 py-4 text-subtle">{row.status}</td>
                       <td className="px-6 py-4">
                         <div className="flex justify-end">
-                          <button className="flex h-9 w-9 items-center justify-center rounded-[10px] border border-border bg-surface text-subtle transition-all hover:bg-surface-2 hover:text-heading">
+                          <button
+                            type="button"
+                            aria-label={`Открыть анализ ${row.name}`}
+                            title={`Открыть анализ ${row.name}`}
+                            onClick={() => navigate({ to: "/ai" })}
+                            className="flex h-9 w-9 items-center justify-center rounded-[10px] border border-border bg-surface text-subtle transition-all hover:bg-surface-2 hover:text-heading"
+                          >
                             <ArrowUpRight className="h-[18px] w-[18px]" />
                           </button>
                         </div>

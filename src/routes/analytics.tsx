@@ -11,10 +11,11 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { PageHeader } from "../components/PageHeader";
-import { TrendingUp, TrendingDown, AlertOctagon } from "lucide-react";
+import { AlertOctagon, TrendingDown, TrendingUp } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { fetchRisks, type RiskRecord } from "../lib/api";
+import { PageHeader } from "../components/PageHeader";
+import { fetchAnalytics, type AnalyticsResponse } from "../lib/api";
+import { useDomainMeta } from "../lib/domain";
 
 export const Route = createFileRoute("/analytics")({
   head: () => ({
@@ -30,6 +31,7 @@ const axis = { stroke: "#475569", fontSize: 12 };
 
 function useIsDark() {
   const [isDark, setIsDark] = useState(true);
+
   useEffect(() => {
     setIsDark(document.documentElement.classList.contains("dark"));
     const observer = new MutationObserver(() => {
@@ -38,6 +40,7 @@ function useIsDark() {
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
     return () => observer.disconnect();
   }, []);
+
   return isDark;
 }
 
@@ -45,7 +48,19 @@ function formatAmount(value: number) {
   return `${value.toLocaleString("ru-RU", { maximumFractionDigits: 0 })} ₸`;
 }
 
-function KpiCard({ icon: Icon, label, value, trend, accent }: any) {
+function KpiCard({
+  icon: Icon,
+  label,
+  value,
+  trend,
+  accent,
+}: {
+  icon: typeof TrendingUp;
+  label: string;
+  value: string | number;
+  trend: string;
+  accent: string;
+}) {
   return (
     <div className="rounded-xl border border-border bg-surface p-5">
       <div className="flex items-center justify-between">
@@ -60,69 +75,58 @@ function KpiCard({ icon: Icon, label, value, trend, accent }: any) {
 
 function AnalyticsPage() {
   const isDark = useIsDark();
-  const [risks, setRisks] = useState<RiskRecord[]>([]);
+  const domainMeta = useDomainMeta();
+  const [analytics, setAnalytics] = useState<AnalyticsResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
     let isMounted = true;
 
-    async function loadRisks() {
+    async function loadAnalytics() {
       try {
         setIsLoading(true);
         setError("");
-        const response = await fetchRisks("a3");
-
+        const response = await fetchAnalytics(domainMeta.id);
         if (!isMounted) return;
-        setRisks(response.risks ?? []);
+        setAnalytics(response);
       } catch (err) {
         if (!isMounted) return;
+        setAnalytics(null);
         setError(err instanceof Error ? err.message : "Не удалось загрузить аналитические данные");
-        setRisks([]);
       } finally {
         if (isMounted) setIsLoading(false);
       }
     }
 
-    void loadRisks();
+    void loadAnalytics();
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [domainMeta.id]);
 
-  const chartData = useMemo(() => {
-    const grouped = new Map<string, number>();
-
-    risks.forEach((risk) => {
-      const date = risk.risk_date || "Нет данных";
-      grouped.set(date, (grouped.get(date) ?? 0) + Number(risk.amount || 0));
-    });
-
-    return Array.from(grouped.entries()).map(([date, amount]) => ({
-      date: date.slice(5) || date,
-      amount,
-    }));
-  }, [risks]);
-
-  const totalAmount = useMemo(
-    () => risks.reduce((sum, risk) => sum + Number(risk.amount || 0), 0),
-    [risks],
+  const chartData = useMemo(
+    () =>
+      (analytics?.by_month ?? []).map((item) => ({
+        date: item.month,
+        amount: Number(item.amount || 0),
+      })),
+    [analytics],
   );
 
-  const criticalSubjects = useMemo(() => {
-    const names = new Set<string>();
-
-    risks.forEach((risk) => {
-      const clinicName = risk.clinic_name || "Неизвестная клиника";
-      if (Number(risk.amount || 0) > 80) {
-        names.add(clinicName);
-      }
-    });
-
-    return names.size;
-  }, [risks]);
-
-  const totalViolations = risks.length;
+  const totalAmount = Number(analytics?.kpi.total_amount || 0);
+  const totalViolations = Number(analytics?.kpi.total_risks || 0);
+  const criticalSubjects = Number(analytics?.kpi.critical_clinics || 0);
+  const tooltipStyle = {
+    backgroundColor: isDark ? "#0f172a" : "#ffffff",
+    border: isDark ? "1px solid rgba(148,163,184,0.2)" : "1px solid rgba(0,0,0,0.1)",
+    borderRadius: 8,
+    color: isDark ? "#e2e8f0" : "#1e293b",
+    boxShadow: isDark ? "0 4px 20px rgba(0,0,0,0.4)" : "0 4px 20px rgba(0,0,0,0.1)",
+  };
+  const gridColor = isDark ? "rgba(148,163,184,0.1)" : "rgba(0,0,0,0.08)";
+  const cursorFill = isDark ? "rgba(148,163,184,0.05)" : "rgba(0,0,0,0.04)";
+  const emptyMessage = `Нет данных для домена «${domainMeta.label}».`;
 
   const kpis = [
     {
@@ -141,37 +145,23 @@ function AnalyticsPage() {
     },
     {
       label: "Нарушений найдено",
-      value: isLoading && !error ? "0" : String(totalViolations),
+      value: isLoading && !error ? "0" : totalViolations.toLocaleString("ru-RU"),
       trend: totalViolations > 0 ? "По последней выгрузке" : "Нет данных",
       accent: "text-emerald-400",
       icon: TrendingDown,
     },
     {
       label: "Дата последней проверки",
-      value: risks.length ? (risks[0]?.risk_date || "—") : "—",
-      trend: risks.length ? "По API" : "Нет данных",
+      value: analytics?.kpi.latest_date || "—",
+      trend: analytics ? "По API" : "Нет данных",
       accent: "text-cyan-400",
       icon: TrendingUp,
     },
   ];
 
-  const tooltipStyle = {
-    backgroundColor: isDark ? "#0f172a" : "#ffffff",
-    border: isDark ? "1px solid rgba(148,163,184,0.2)" : "1px solid rgba(0,0,0,0.1)",
-    borderRadius: 8,
-    color: isDark ? "#e2e8f0" : "#1e293b",
-    boxShadow: isDark ? "0 4px 20px rgba(0,0,0,0.4)" : "0 4px 20px rgba(0,0,0,0.1)",
-  };
-
-  const gridColor = isDark ? "rgba(148,163,184,0.1)" : "rgba(0,0,0,0.08)";
-  const cursorFill = isDark ? "rgba(148,163,184,0.05)" : "rgba(0,0,0,0.04)";
-
   return (
     <>
-      <PageHeader
-        title="Аналитика и Тренды"
-        subtitle="Сводные показатели экономических рисков по данным API"
-      />
+      <PageHeader title="Аналитика и Тренды" subtitle="Сводные показатели экономических рисков по данным API" />
       <div className="space-y-6 p-8">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
           {kpis.map(({ icon: Icon, label, value, trend, accent }) => (
@@ -179,34 +169,24 @@ function AnalyticsPage() {
           ))}
         </div>
 
-        {error ? (
-          <div className="rounded-xl border border-red-500/30 bg-red-500/5 p-4 text-sm text-red-400">{error}</div>
-        ) : null}
+        {error ? <div className="rounded-xl border border-red-500/30 bg-red-500/5 p-4 text-sm text-red-400">{error}</div> : null}
 
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
           <section className="rounded-xl border border-border bg-surface p-5 xl:col-span-2">
-            <header className="mb-4 flex items-center justify-between">
-              <div>
-                <h2 className="text-base font-semibold text-heading">Динамика нарушений по датам</h2>
-                <p className="text-xs text-subtle">Сумма по risk_date из последнего ответа API</p>
-              </div>
+            <header className="mb-4">
+              <h2 className="text-base font-semibold text-heading">Динамика нарушений по месяцам</h2>
+              <p className="text-xs text-subtle">Сумма по месяцам последней выгрузки</p>
             </header>
             <div className="h-72">
               {chartData.length === 0 ? (
-                <div className="flex h-full items-center justify-center text-sm text-subtle">
-                  Нет данных. Загрузите файл на главной странице.
-                </div>
+                <div className="flex h-full items-center justify-center text-sm text-subtle">{emptyMessage}</div>
               ) : (
                 <ResponsiveContainer>
                   <BarChart data={chartData}>
                     <CartesianGrid stroke={gridColor} vertical={false} />
                     <XAxis dataKey="date" {...axis} />
                     <YAxis {...axis} />
-                    <Tooltip
-                      contentStyle={tooltipStyle}
-                      cursor={{ fill: cursorFill }}
-                      formatter={(value: number) => `${value.toLocaleString("ru-RU")} ₸`}
-                    />
+                    <Tooltip contentStyle={tooltipStyle} cursor={{ fill: cursorFill }} formatter={(value: number) => `${value.toLocaleString("ru-RU")} ₸`} />
                     <Legend />
                     <Bar dataKey="amount" name="Сумма нарушений" fill="#22d3ee" radius={[4, 4, 0, 0]} />
                   </BarChart>
@@ -217,33 +197,20 @@ function AnalyticsPage() {
 
           <section className="rounded-xl border border-border bg-surface p-5">
             <header className="mb-4">
-              <h2 className="text-base font-semibold text-heading">График по датам</h2>
-              <p className="text-xs text-subtle">Показатели из реального набора данных</p>
+              <h2 className="text-base font-semibold text-heading">График по месяцам</h2>
+              <p className="text-xs text-subtle">Показатели выбранного домена</p>
             </header>
             <div className="h-64">
               {chartData.length === 0 ? (
-                <div className="flex h-full items-center justify-center text-sm text-subtle">
-                  Нет данных. Загрузите файл на главной странице.
-                </div>
+                <div className="flex h-full items-center justify-center text-sm text-subtle">{emptyMessage}</div>
               ) : (
                 <ResponsiveContainer>
                   <LineChart data={chartData}>
                     <CartesianGrid stroke={gridColor} vertical={false} />
                     <XAxis dataKey="date" {...axis} />
                     <YAxis {...axis} />
-                    <Tooltip
-                      contentStyle={tooltipStyle}
-                      formatter={(value: number) => `${value.toLocaleString("ru-RU")} ₸`}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="amount"
-                      name="Нарушения, ₸"
-                      stroke="#f87171"
-                      strokeWidth={2.5}
-                      dot={{ r: 4, fill: "#f87171", strokeWidth: 0 }}
-                      activeDot={{ r: 6 }}
-                    />
+                    <Tooltip contentStyle={tooltipStyle} formatter={(value: number) => `${value.toLocaleString("ru-RU")} ₸`} />
+                    <Line type="monotone" dataKey="amount" name="Нарушения, ₸" stroke="#f87171" strokeWidth={2.5} dot={{ r: 4, fill: "#f87171", strokeWidth: 0 }} activeDot={{ r: 6 }} />
                   </LineChart>
                 </ResponsiveContainer>
               )}
@@ -253,12 +220,10 @@ function AnalyticsPage() {
           <section className="rounded-xl border border-border bg-surface p-5">
             <header className="mb-4">
               <h2 className="text-base font-semibold text-heading">Сводка по рискам</h2>
-              <p className="text-xs text-subtle">Данные сформированы из ответа сервера</p>
+              <p className="text-xs text-subtle">Данные домена «{domainMeta.label}»</p>
             </header>
-            <div className="flex h-64 items-center justify-center text-sm text-subtle">
-              {chartData.length === 0
-                ? "Нет данных. Загрузите файл на главной странице."
-                : `Проверено ${risks.length} записей • ${criticalSubjects} критических субъектов`}
+            <div className="flex h-64 items-center justify-center text-center text-sm text-subtle">
+              {chartData.length === 0 ? emptyMessage : `Проверено ${totalViolations.toLocaleString("ru-RU")} записей • ${criticalSubjects} критических субъектов`}
             </div>
           </section>
         </div>

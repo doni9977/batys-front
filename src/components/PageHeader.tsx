@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Settings, Moon, Sun } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { DomainSwitcher } from "./DomainSwitcher";
 
@@ -42,16 +43,24 @@ export function PageHeader({
         {/* Global Header Controls (Profile, Settings, Theme) */}
         <div className="flex min-w-0 items-center gap-2">
           <DomainSwitcher />
-          <button 
+          <button
+            type="button"
+            aria-label={isDark ? "Включить светлую тему" : "Включить тёмную тему"}
+            title={isDark ? "Включить светлую тему" : "Включить тёмную тему"}
             onClick={toggleTheme}
             className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-surface text-subtle transition-colors hover:bg-surface-2 hover:text-heading"
           >
             {isDark ? <Sun size={18} /> : <Moon size={18} />}
           </button>
           
-          <button className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-surface text-subtle transition-colors hover:bg-surface-2 hover:text-heading">
+          <Link
+            to="/access"
+            aria-label="Открыть управление доступами"
+            title="Управление доступами"
+            className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-surface text-subtle transition-colors hover:bg-surface-2 hover:text-heading"
+          >
             <Settings size={18} />
-          </button>
+          </Link>
 
           <div className="flex items-center gap-3 rounded-xl bg-surface py-1.5 pl-1.5 pr-3">
             <div className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-gradient-to-br from-cyan-500 to-blue-700 text-xs font-semibold text-white">

@@ -83,6 +83,7 @@ function AiPage() {
   const domainMeta = useDomainMeta();
   const indicatorOptions = domainMeta.algorithms;
   const [risks, setRisks] = useState<RiskRecord[]>([]);
+  const [totalRiskCount, setTotalRiskCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
@@ -103,14 +104,16 @@ function AiPage() {
       try {
         setIsLoading(true);
         setError("");
-        const response = await fetchRisks(selectedIndicator);
+        const response = await fetchRisks(selectedIndicator, undefined, { limit: 1000 });
 
         if (!isMounted) return;
         setRisks(response.risks ?? []);
+        setTotalRiskCount(response.total_found ?? response.risks?.length ?? 0);
       } catch (err) {
         if (!isMounted) return;
         setError(err instanceof Error ? err.message : "Не удалось загрузить аномалии");
         setRisks([]);
+        setTotalRiskCount(0);
       } finally {
         if (isMounted) setIsLoading(false);
       }
@@ -182,8 +185,9 @@ function AiPage() {
           }
 
           if (job.status === "done") {
-            const response = await fetchRisks(selectedIndicator, jobId);
+            const response = await fetchRisks(selectedIndicator, jobId, { limit: 1000 });
             setRisks(response.risks ?? []);
+            setTotalRiskCount(response.total_found ?? response.risks?.length ?? 0);
             setUploadStatus("done");
             return;
           }
@@ -234,14 +238,14 @@ function AiPage() {
           </div>
           <div className="flex flex-wrap gap-2">
             {indicatorOptions.map((option) => {
-              const isActive = selectedIndicator === option.value;
+              const isActive = selectedIndicator === option.id;
 
               return (
                 <button
-                  key={option.value}
+                  key={option.id}
                   type="button"
                   aria-pressed={isActive}
-                  onClick={() => setSelectedIndicator(option.value)}
+                  onClick={() => setSelectedIndicator(option.id)}
                   className={`rounded-lg border px-3 py-2 text-left text-sm transition-all ${
                     isActive
                       ? "border-cyan-500 bg-cyan-500/10 text-cyan-600 shadow-sm ring-2 ring-cyan-500/20 dark:text-cyan-300"
@@ -301,9 +305,9 @@ function AiPage() {
           <KpiCard
             icon={AlertTriangle}
             label="Аномалий обнаружено"
-            value={isLoading ? 0 : anomalies.length}
+            value={isLoading ? 0 : totalRiskCount}
             accent="bg-red-500/10 text-red-500 dark:text-red-400"
-            subtext={anomalies.length ? `${criticalCount} критических` : "Нет данных"}
+            subtext={totalRiskCount ? `${criticalCount} критических · показано ${anomalies.length}` : "Нет данных"}
           />
           <KpiCard
             icon={Database}
@@ -317,14 +321,14 @@ function AiPage() {
             label="Сумма нарушений"
             value={isLoading ? "0 ед." : formatMetricValue(totalAmount)}
             accent="bg-amber-500/10 text-amber-600 dark:text-amber-300"
-            subtext="Из ответа API"
+            subtext="По загруженным записям"
           />
           <KpiCard
             icon={FileText}
             label="Документов обработано"
-            value={isLoading ? 0 : anomalies.length}
+            value={isLoading ? 0 : totalRiskCount}
             accent="bg-violet-500/10 text-violet-600 dark:text-violet-400"
-            subtext={anomalies.length ? "Записи API" : "Нет данных"}
+            subtext={totalRiskCount ? "Всего по алгоритму" : "Нет данных"}
           />
         </div>
 

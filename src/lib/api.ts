@@ -37,7 +37,46 @@ export type RiskRecord = {
 export type RisksResponse = {
   indicator: string;
   description: string;
+  total_found: number;
+  total_pages: number;
   risks: RiskRecord[];
+};
+
+export type AnalyticsResponse = {
+  job_id: number;
+  kpi: {
+    total_amount: number;
+    total_risks: number;
+    unique_clinics: number;
+    critical_clinics: number;
+    latest_date: string;
+  };
+  by_month: Array<{
+    month: string;
+    amount: number;
+    count: number;
+  }>;
+  by_indicator: Array<{
+    indicator: string;
+    amount: number;
+    count: number;
+  }>;
+  by_clinic: Array<{
+    clinic_name: string;
+    amount: number;
+    count: number;
+  }>;
+};
+
+export type RegistryResponse = {
+  job_id?: number;
+  subjects: Array<{
+    clinic_name: string;
+    total_amount: number;
+    total_risks: number;
+    bin: string;
+    district: string;
+  }>;
 };
 
 export const uploadFile = async (file: File): Promise<UploadResponse> => {
@@ -68,10 +107,52 @@ export const checkJobStatus = async (jobId: number): Promise<RiskJobStatus> => {
   return response.json() as Promise<RiskJobStatus>;
 };
 
-export const fetchRisks = async (indicator: string, jobId?: number): Promise<RisksResponse> => {
-  const url = jobId
-    ? apiUrl(`/api/risks/${indicator}?job_id=${jobId}`)
-    : apiUrl(`/api/risks/${indicator}`);
+export const fetchAnalytics = async (domain: string): Promise<AnalyticsResponse> => {
+  const normalizedDomain = domain.trim().toLowerCase();
+  if (!normalizedDomain) {
+    throw new Error("Не выбран домен аналитики");
+  }
+
+  const response = await fetch(apiUrl(`/api/analytics?domain=${encodeURIComponent(normalizedDomain)}`));
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(errorText || "Failed to fetch analytics");
+  }
+
+  return response.json() as Promise<AnalyticsResponse>;
+};
+
+export const fetchRegistry = async (domain: string): Promise<RegistryResponse> => {
+  const normalizedDomain = domain.trim().toLowerCase();
+  if (!normalizedDomain) {
+    throw new Error("Не выбран домен реестра");
+  }
+
+  const response = await fetch(apiUrl(`/api/registry?domain=${encodeURIComponent(normalizedDomain)}`));
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(errorText || "Failed to fetch registry");
+  }
+
+  return response.json() as Promise<RegistryResponse>;
+};
+
+export const fetchRisks = async (
+  indicator: string,
+  jobId?: number,
+  options?: { page?: number; limit?: number },
+): Promise<RisksResponse> => {
+  const normalizedIndicator = typeof indicator === "string" ? indicator.trim().toLowerCase() : "";
+  if (!normalizedIndicator) {
+    throw new Error("Не выбран алгоритм анализа");
+  }
+
+  const params = new URLSearchParams();
+  if (jobId) params.set("job_id", String(jobId));
+  if (options?.page) params.set("page", String(options.page));
+  if (options?.limit) params.set("limit", String(options.limit));
+  const query = params.toString();
+  const url = apiUrl(`/api/risks/${normalizedIndicator}${query ? `?${query}` : ""}`);
   const response = await fetch(url);
 
   if (!response.ok) {
