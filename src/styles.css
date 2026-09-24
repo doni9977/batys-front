@@ -231,3 +231,11 @@
   .registration-shell { padding: 1rem; }
   .registration-card { padding: 1.5rem; }
 }
+
+/* Темная тема для стандартной карты OSM */
+html.dark .leaflet-tile-pane,
+html.dark .leaflet-control-zoom-in,
+html.dark .leaflet-control-zoom-out,
+html.dark .leaflet-control-attribution {
+  filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
+}

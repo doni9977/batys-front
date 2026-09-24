@@ -27,13 +27,13 @@ export function PageHeader({
   };
 
   return (
-    <div className="grid h-[92px] min-w-0 shrink-0 grid-cols-[minmax(180px,1fr)_minmax(0,auto)] items-center gap-3 overflow-hidden border-b border-border bg-background/80 px-6 py-3 backdrop-blur">
+    <div className="grid h-[92px] min-w-0 shrink-0 grid-cols-[minmax(180px,1fr)_minmax(0,auto)] items-center gap-3 border-b border-border bg-background/80 px-6 py-3 backdrop-blur z-40 relative">
       <div className="min-w-0">
         <h1 className="text-lg font-semibold leading-tight tracking-tight text-heading">{title}</h1>
         {subtitle && <p className="mt-1 line-clamp-2 text-xs leading-tight text-subtle">{subtitle}</p>}
       </div>
       
-      <div className="flex min-w-0 max-w-full items-center justify-end gap-3 overflow-hidden">
+      <div className="flex min-w-0 max-w-full items-center justify-end gap-3">
         {right}
 
         {/* Separator if right content exists */}
