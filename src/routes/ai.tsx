@@ -13,7 +13,7 @@ import {
   UploadCloud,
 } from "lucide-react";
 import { PageHeader } from "../components/PageHeader";
-import { fetchRisks, uploadFile, checkJobStatus, type RiskRecord } from "../lib/api";
+import { fetchRisks, uploadFile, uploadNonResidentFile, checkJobStatus, type RiskRecord } from "../lib/api";
 import { useDomainMeta } from "../lib/domain";
 
 export const Route = createFileRoute("/ai")({
@@ -168,7 +168,7 @@ function AiPage() {
     try {
       setUploadStatus("uploading");
       setUploadError("");
-      const uploadResult = await uploadFile(selectedFile);
+      const uploadResult = domainMeta.id === "nr" ? await uploadNonResidentFile(selectedFile) : await uploadFile(selectedFile);
       const jobId = typeof uploadResult.risk_job_id === "number" ? uploadResult.risk_job_id : undefined;
 
       if (jobId) {

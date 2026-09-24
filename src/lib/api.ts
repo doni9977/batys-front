@@ -148,6 +148,23 @@ export const uploadFile = async (file: File): Promise<UploadResponse> => {
   return response.json() as Promise<UploadResponse>;
 };
 
+export const uploadNonResidentFile = async (file: File): Promise<UploadResponse> => {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await authenticatedFetch(apiUrl("/api/upload-nr"), {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const payload = (await response.json().catch(() => null)) as { error?: string } | null;
+    throw new Error(payload?.error || "Не удалось загрузить файл нерезидентов");
+  }
+
+  return response.json() as Promise<UploadResponse>;
+};
+
 export const checkJobStatus = async (jobId: number): Promise<RiskJobStatus> => {
   const response = await authenticatedFetch(apiUrl(`/api/risk-jobs/${jobId}`));
 
