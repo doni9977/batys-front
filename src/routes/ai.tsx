@@ -172,7 +172,14 @@ function AiPage() {
         setUploadStatus("running");
 
         for (let attempt = 0; attempt < 120; attempt += 1) {
-          const job = await checkJobStatus(jobId);
+          let job;
+          try {
+            job = await checkJobStatus(jobId);
+          } catch (err) {
+            if (attempt === 119) throw err;
+            await new Promise((resolve) => window.setTimeout(resolve, 2000));
+            continue;
+          }
 
           if (job.status === "done") {
             const response = await fetchRisks(selectedIndicator, jobId);
