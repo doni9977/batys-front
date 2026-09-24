@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Sidebar } from "../components/Sidebar";
+import { DomainProvider } from "../lib/domain";
 
 function NotFoundComponent() {
   return (
@@ -55,9 +56,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: "BatysMonitor — ДЭР ЗКО" },
       { name: "description", content: "Система мониторинга экономических рисков Западно-Казахстанской области" },
     ],
-    links: [
-      { rel: "stylesheet", href: "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" },
-    ],
   }),
   component: RootComponent,
   notFoundComponent: NotFoundComponent,
@@ -82,12 +80,14 @@ function RootComponent() {
   
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="min-h-screen bg-background text-foreground flex">
-        <Sidebar isCollapsed={isCollapsed} onToggle={() => setIsCollapsed(!isCollapsed)} />
-        <main className={`min-h-screen flex-1 transition-all duration-300 ${isCollapsed ? "ml-[80px]" : "ml-[280px]"}`}>
-          <Outlet />
-        </main>
-      </div>
+      <DomainProvider>
+        <div className="min-h-screen bg-background text-foreground flex">
+          <Sidebar isCollapsed={isCollapsed} onToggle={() => setIsCollapsed(!isCollapsed)} />
+          <main className={`min-h-screen flex-1 transition-all duration-300 ${isCollapsed ? "ml-[80px]" : "ml-[280px]"}`}>
+            <Outlet />
+          </main>
+        </div>
+      </DomainProvider>
     </QueryClientProvider>
   );
 }

@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Settings, Moon, Sun } from "lucide-react";
 import { useEffect, useState } from "react";
+import { DomainSwitcher } from "./DomainSwitcher";
 
 export function PageHeader({
   title,
@@ -26,20 +27,21 @@ export function PageHeader({
   };
 
   return (
-    <div className="flex items-end justify-between gap-4 border-b border-border bg-background/80 px-8 py-4 backdrop-blur">
-      <div>
+    <div className="flex min-h-[74px] items-center justify-between gap-3 border-b border-border bg-background/80 px-6 py-3 backdrop-blur">
+      <div className="w-[180px] shrink-0">
         <h1 className="text-xl font-semibold tracking-tight text-heading">{title}</h1>
-        {subtitle && <p className="mt-0.5 text-sm text-subtle">{subtitle}</p>}
+        {subtitle && <p className="mt-0.5 text-sm leading-tight text-subtle">{subtitle}</p>}
       </div>
       
-      <div className="flex items-center gap-6">
+      <div className="flex min-w-0 items-center justify-end gap-2">
         {right}
 
         {/* Separator if right content exists */}
         {right && <div className="h-8 w-px bg-border" />}
 
         {/* Global Header Controls (Profile, Settings, Theme) */}
-        <div className="flex items-center gap-4">
+        <div className="flex min-w-0 items-center gap-2">
+          <DomainSwitcher />
           <button 
             onClick={toggleTheme}
             className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-surface text-subtle transition-colors hover:bg-surface-2 hover:text-heading"

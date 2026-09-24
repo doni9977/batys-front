@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, useRef } from "react";
 import { Search } from "lucide-react";
+import "leaflet/dist/leaflet.css";
 import { PageHeader } from "../components/PageHeader";
 import { fetchRisks, type RiskRecord } from "../lib/api";
 
@@ -107,6 +108,8 @@ function MapPage() {
       mapRef.current = map;
       layerGroupRef.current = L.layerGroup().addTo(map);
 
+      requestAnimationFrame(() => map.invalidateSize());
+
       // Используем бесплатные карты OpenStreetMap, которые не требуют API-ключа и не имеют срока действия (не истекают)
       const tileUrl = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
 
@@ -171,7 +174,7 @@ function MapPage() {
         title="Карта рисков"
         subtitle="Западно-Казахстанская область · оперативный мониторинг"
         right={
-          <div className="relative w-[420px]">
+          <div className="relative w-[min(420px,28vw)]">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-subtle" />
             <input
               placeholder="Поиск по названию ТОО или БИН..."
@@ -181,7 +184,7 @@ function MapPage() {
         }
       />
 
-      <div className="relative h-[calc(100vh-89px)] w-full">
+      <div className="relative h-[calc(100vh-74px)] w-full">
         <div id="risk-map" className="absolute inset-0 cyber-grid" />
 
       </div>

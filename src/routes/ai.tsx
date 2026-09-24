@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { PageHeader } from "../components/PageHeader";
 import { fetchRisks, uploadFile, checkJobStatus, type RiskRecord } from "../lib/api";
+import { useDomainMeta } from "../lib/domain";
 
 export const Route = createFileRoute("/ai")({
   head: () => ({
@@ -38,7 +39,7 @@ type Anomaly = {
   detailText: string;
 };
 
-const indicatorOptions = [
+const osmsIndicatorOptions = [
   { value: "a1", label: "A1 — Возрастные аномалии / несоответствие профилю" },
   { value: "a2", label: "A2 — Половое несоответствие услуги" },
   { value: "a3", label: "A3 — Аномальная нагрузка врача" },
@@ -79,6 +80,8 @@ function KpiCard({ icon: Icon, label, value, accent, subtext }: { icon: typeof S
 }
 
 function AiPage() {
+  const domainMeta = useDomainMeta();
+  const indicatorOptions = domainMeta.algorithms;
   const [risks, setRisks] = useState<RiskRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
@@ -88,6 +91,10 @@ function AiPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadStatus, setUploadStatus] = useState<"idle" | "uploading" | "running" | "done" | "error">("idle");
   const [uploadError, setUploadError] = useState("");
+
+  useEffect(() => {
+    setSelectedIndicator(domainMeta.algorithms[0]?.id ?? osmsIndicatorOptions[0].value);
+  }, [domainMeta.id, domainMeta.algorithms]);
 
   useEffect(() => {
     let isMounted = true;
