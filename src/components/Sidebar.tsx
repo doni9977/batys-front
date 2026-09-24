@@ -1,4 +1,4 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
   MapPin,
   BarChart3,
@@ -6,8 +6,22 @@ import {
   Sparkles,
   ShieldCheck,
   Menu,
+  UserPlus,
+  LogOut,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { clearAuthToken } from "../lib/api";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "./ui/alert-dialog";
 
 type NavItem = { to: string; label: string; icon: LucideIcon };
 
@@ -15,7 +29,11 @@ const mainNav: NavItem[] = [
   { to: "/", label: "Карта рисков", icon: MapPin },
   { to: "/analytics", label: "Аналитика и Тренды", icon: BarChart3 },
   { to: "/registry", label: "Реестр субъектов", icon: Building2 },
-  { to: "/ai", label: "ИИ-Аналитик", icon: Sparkles },
+  { to: "/ai", label: "Аналитик", icon: Sparkles },
+];
+
+const sysNav: NavItem[] = [
+  { to: "/registration", label: "Регистрация доступа", icon: UserPlus },
 ];
 
 
@@ -40,8 +58,14 @@ function NavLink({ item, active, isCollapsed }: { item: NavItem; active: boolean
 }
 
 export function Sidebar({ isCollapsed, onToggle }: { isCollapsed: boolean; onToggle: () => void }) {
+  const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isActive = (p: string) => (p === "/" ? pathname === "/" : pathname.startsWith(p));
+
+  const handleLogout = () => {
+    clearAuthToken();
+    navigate({ to: "/" });
+  };
 
   return (
     <aside className={`fixed inset-y-0 left-0 z-30 flex flex-col border-r border-border bg-sidebar text-sidebar-foreground transition-all duration-300 ${isCollapsed ? "w-[80px]" : "w-[280px]"}`}>
@@ -79,6 +103,42 @@ export function Sidebar({ isCollapsed, onToggle }: { isCollapsed: boolean; onTog
             <NavLink key={i.to} item={i} active={isActive(i.to)} isCollapsed={isCollapsed} />
           ))}
         </div>
+
+        {!isCollapsed && (
+          <div className="px-2 pb-2 pt-6 text-[10px] font-semibold uppercase tracking-[0.18em] text-subtle">
+            Система
+          </div>
+        )}
+        <div className="space-y-1">
+          {sysNav.map((i) => (
+            <NavLink key={i.to} item={i} active={isActive(i.to)} isCollapsed={isCollapsed} />
+          ))}
+        </div>
+
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <button
+              type="button"
+              className="group mt-4 flex w-full items-center gap-3 rounded-lg border border-transparent px-3 py-2.5 text-sm text-body transition-all hover:bg-surface-2 hover:text-heading"
+              title="Выйти из системы"
+            >
+              <LogOut className="h-4.5 w-4.5 shrink-0" size={18} />
+              {!isCollapsed && <span className="truncate">Выйти</span>}
+            </button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Выйти из системы?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Текущая сессия будет завершена. Для продолжения работы потребуется войти заново.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Остаться</AlertDialogCancel>
+              <AlertDialogAction onClick={handleLogout}>Выйти</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
       </nav>
 

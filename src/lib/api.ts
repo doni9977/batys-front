@@ -1,3 +1,13 @@
+import { apiUrl } from "./config";
+
+const AUTH_TOKEN_KEY = "batys-auth-token";
+
+export type LoginResponse = {
+  status: "success";
+  token: string;
+  username: string;
+};
+
 export type UploadResponse = {
   status: "success" | "error";
   message: string;
@@ -21,27 +31,27 @@ export type RiskDetails = {
   service_count?: number;
   daily_count?: number;
   threshold?: number;
-  
+
   // A10
   actual_interval_minutes?: number;
   required_interval_minutes?: number;
   previous_service_name?: string;
   service_name?: string;
-  
+
   // A1, A2
   patient_age?: number;
   patient_gender?: string;
   reason?: string;
-  
+
   // A4
   total_count?: number;
   allowed_per_day?: number;
-  
+
   // A7
   year?: number;
   total_quantity?: number;
   allowed_per_year?: number;
-  
+
   // A8
   quantity?: number;
   actual_amount?: number;
@@ -71,12 +81,15 @@ export type RisksResponse = {
   risks: RiskRecord[];
 };
 
-export const uploadFile = async (file: File, endpoint: string = "/api/upload"): Promise<UploadResponse> => {
+export const uploadFile = async (
+  file: File,
+  endpoint: string = "/api/upload",
+): Promise<UploadResponse> => {
   const formData = new FormData();
   const fieldName = endpoint.includes("inpatient") ? "files" : "file";
   formData.append(fieldName, file);
 
-  const response = await fetch(endpoint, {
+  const response = await authenticatedFetch(apiUrl(endpoint), {
     method: "POST",
     body: formData,
   });
@@ -89,8 +102,14 @@ export const uploadFile = async (file: File, endpoint: string = "/api/upload"): 
   return response.json() as Promise<UploadResponse>;
 };
 
+export const uploadNonResidentFile = async (file: File): Promise<UploadResponse> =>
+  uploadFile(file, "/api/upload-nr");
+
+export const uploadInpatientFile = async (file: File): Promise<UploadResponse> =>
+  uploadFile(file, "/api/upload-inpatient");
+
 export const checkJobStatus = async (jobId: number): Promise<RiskJobStatus> => {
-  const response = await fetch(`/api/risk-jobs/${jobId}`);
+  const response = await authenticatedFetch(apiUrl(`/api/risk-jobs/${jobId}`));
 
   if (!response.ok) {
     const errorText = await response.text();
@@ -100,13 +119,20 @@ export const checkJobStatus = async (jobId: number): Promise<RiskJobStatus> => {
   return response.json() as Promise<RiskJobStatus>;
 };
 
-export const fetchRisks = async (indicator: string, jobId?: number, page: number = 1, limit: number = 100): Promise<RisksResponse> => {
-  const url = new URL(`/api/risks/${indicator}`, window.location.origin);
-  if (jobId) url.searchParams.append("job_id", jobId.toString());
-  url.searchParams.append("page", page.toString());
-  url.searchParams.append("limit", limit.toString());
-
-  const response = await fetch(url.pathname + url.search);
+export const fetchRisks = async (
+  indicator: string,
+  jobId?: number,
+  page: number = 1,
+  limit: number = 100,
+): Promise<RisksResponse> => {
+  const params = new URLSearchParams();
+  if (jobId) params.set("job_id", jobId.toString());
+  if (page) params.set("page", page.toString());
+  if (limit) params.set("limit", limit.toString());
+  const query = params.toString();
+  const response = await authenticatedFetch(
+    apiUrl(`/api/risks/${indicator}${query ? `?${query}` : ""}`),
+  );
 
   if (!response.ok) {
     const errorText = await response.text();
@@ -130,9 +156,11 @@ export type RegistryResponse = {
 };
 
 export const fetchRegistry = async (domain: string = "osms"): Promise<RegistryResponse> => {
-  const url = new URL("/api/registry", window.location.origin);
-  url.searchParams.append("domain", domain);
-  const response = await fetch(url.pathname + url.search);
+  const normalizedDomain = domain.trim().toLowerCase();
+  if (!normalizedDomain) throw new Error("Не выбран домен реестра");
+  const response = await authenticatedFetch(
+    apiUrl(`/api/registry?domain=${encodeURIComponent(normalizedDomain)}`),
+  );
   if (!response.ok) {
     const errorText = await response.text();
     throw new Error(errorText || "Failed to fetch registry");
@@ -159,10 +187,56 @@ export type AnalyticsResponse = {
   by_clinic: AnalyticsClinicRow[];
 };
 
+export const getAuthToken = () => {
+  try {
+    return localStorage.getItem(AUTH_TOKEN_KEY);
+  } catch {
+    return null;
+  }
+};
+
+export const setAuthToken = (token: string) => {
+  localStorage.setItem(AUTH_TOKEN_KEY, token);
+  window.dispatchEvent(new Event("batys-auth-changed"));
+};
+
+export const clearAuthToken = () => {
+  localStorage.removeItem(AUTH_TOKEN_KEY);
+  window.dispatchEvent(new Event("batys-auth-changed"));
+};
+
+export const isAuthenticated = () => Boolean(getAuthToken());
+
+export const login = async (username: string, password: string): Promise<LoginResponse> => {
+  const response = await fetch(apiUrl("/api/auth/login"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, password }),
+  });
+
+  if (!response.ok) {
+    const payload = (await response.json().catch(() => null)) as { error?: string } | null;
+    throw new Error(payload?.error || "Не удалось выполнить вход");
+  }
+
+  const result = (await response.json()) as LoginResponse;
+  setAuthToken(result.token);
+  return result;
+};
+
+const authenticatedFetch = (input: RequestInfo | URL, init: RequestInit = {}) => {
+  const headers = new Headers(init.headers);
+  const token = getAuthToken();
+  if (token) headers.set("Authorization", `Bearer ${token}`);
+  return fetch(input, { ...init, headers });
+};
+
 export const fetchAnalytics = async (domain: string = "osms"): Promise<AnalyticsResponse> => {
-  const url = new URL("/api/analytics", window.location.origin);
-  url.searchParams.append("domain", domain);
-  const response = await fetch(url.pathname + url.search);
+  const normalizedDomain = domain.trim().toLowerCase();
+  if (!normalizedDomain) throw new Error("Не выбран домен аналитики");
+  const response = await authenticatedFetch(
+    apiUrl(`/api/analytics?domain=${encodeURIComponent(normalizedDomain)}`),
+  );
   if (!response.ok) {
     const errorText = await response.text();
     throw new Error(errorText || "Failed to fetch analytics");

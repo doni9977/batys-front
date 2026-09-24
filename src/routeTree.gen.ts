@@ -15,6 +15,7 @@ import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as AiRouteImport } from './routes/ai'
 import { Route as AccessRouteImport } from './routes/access'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as RegistrationRouteImport } from './routes/registration'
 
 const RegistryRoute = RegistryRouteImport.update({
   id: '/registry',
@@ -46,6 +47,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RegistrationRoute = RegistrationRouteImport.update({
+  id: '/registration',
+  path: '/registration',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -54,6 +60,7 @@ export interface FileRoutesByFullPath {
   '/analytics': typeof AnalyticsRoute
   '/integrations': typeof IntegrationsRoute
   '/registry': typeof RegistryRoute
+  '/registration': typeof RegistrationRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -62,6 +69,7 @@ export interface FileRoutesByTo {
   '/analytics': typeof AnalyticsRoute
   '/integrations': typeof IntegrationsRoute
   '/registry': typeof RegistryRoute
+  '/registration': typeof RegistrationRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -71,6 +79,7 @@ export interface FileRoutesById {
   '/analytics': typeof AnalyticsRoute
   '/integrations': typeof IntegrationsRoute
   '/registry': typeof RegistryRoute
+  '/registration': typeof RegistrationRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -81,8 +90,9 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/integrations'
     | '/registry'
+    | '/registration'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/access' | '/ai' | '/analytics' | '/integrations' | '/registry'
+  to: '/' | '/access' | '/ai' | '/analytics' | '/integrations' | '/registry' | '/registration'
   id:
     | '__root__'
     | '/'
@@ -100,6 +110,7 @@ export interface RootRouteChildren {
   AnalyticsRoute: typeof AnalyticsRoute
   IntegrationsRoute: typeof IntegrationsRoute
   RegistryRoute: typeof RegistryRoute
+  RegistrationRoute: typeof RegistrationRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -146,6 +157,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/registration': {
+      id: '/registration'
+      path: '/registration'
+      fullPath: '/registration'
+      preLoaderRoute: typeof RegistrationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -156,6 +174,7 @@ const rootRouteChildren: RootRouteChildren = {
   AnalyticsRoute: AnalyticsRoute,
   IntegrationsRoute: IntegrationsRoute,
   RegistryRoute: RegistryRoute,
+  RegistrationRoute: RegistrationRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

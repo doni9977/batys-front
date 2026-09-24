@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Sidebar } from "../components/Sidebar";
 import { DomainProvider } from "../lib/domain";
+import { getAuthToken } from "../lib/api";
 
 function NotFoundComponent() {
   return (
@@ -68,6 +69,17 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [authenticated, setAuthenticated] = useState(() => Boolean(getAuthToken()));
+
+  useEffect(() => {
+    const syncAuth = () => setAuthenticated(Boolean(getAuthToken()));
+    window.addEventListener("batys-auth-changed", syncAuth);
+    window.addEventListener("storage", syncAuth);
+    return () => {
+      window.removeEventListener("batys-auth-changed", syncAuth);
+      window.removeEventListener("storage", syncAuth);
+    };
+  }, []);
 
   useEffect(() => {
     // Sync theme class from localStorage on hydration
@@ -84,9 +96,9 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <DomainProvider>
-        <div className="min-h-screen bg-background text-foreground flex">
-          <Sidebar isCollapsed={isCollapsed} onToggle={() => setIsCollapsed(!isCollapsed)} />
-          <main className={`min-h-screen flex-1 transition-all duration-300 ${isCollapsed ? "ml-[80px]" : "ml-[280px]"}`}>
+        <div className="flex min-h-screen min-w-0 bg-background text-foreground">
+          {authenticated ? <Sidebar isCollapsed={isCollapsed} onToggle={() => setIsCollapsed(!isCollapsed)} /> : null}
+          <main className={`min-h-screen min-w-0 flex-1 transition-all duration-300 ${authenticated ? (isCollapsed ? "ml-[80px]" : "ml-[280px]") : ""}`}>
             <Outlet />
           </main>
         </div>

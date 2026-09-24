@@ -21,7 +21,7 @@ import { fetchRisks, uploadFile, checkJobStatus, type RiskRecord } from "../lib/
 export const Route = createFileRoute("/ai")({
   head: () => ({
     meta: [
-      { title: "ИИ-Аналитик — BatysMonitor" },
+      { title: "Аналитик — BatysMonitor" },
       { name: "description", content: "AI-анализ документов и обнаружение аномалий в данных ЗКО" },
     ],
   }),
@@ -300,7 +300,7 @@ function AiPage() {
   return (
     <div className="min-h-screen bg-slate-50/50 dark:bg-slate-950/50">
       <PageHeader
-        title="ИИ-Аналитик"
+        title="Аналитик"
         subtitle="Интеллектуальный поиск фрода и аномалий в данных медицинского страхования"
       />
 
@@ -544,7 +544,7 @@ function AiPage() {
 
                   {/* Detail explanation */}
                   <div className="mt-5 rounded-2xl bg-white/50 p-4 text-sm font-medium text-slate-700 ring-1 ring-slate-900/5 dark:bg-black/20 dark:text-slate-300 dark:ring-white/5">
-                     <span className="text-cyan-600 dark:text-cyan-400 font-bold mr-2">Решение ИИ:</span>
+                     <span className="text-cyan-600 dark:text-cyan-400 font-bold mr-2">Отчет:</span>
                      {item.detailText}
                   </div>
                 </div>

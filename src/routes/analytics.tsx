@@ -283,7 +283,7 @@ function AnalyticsPage() {
               </div>
             ) : chartData.length === 0 ? (
               <div className="flex h-full items-center justify-center text-sm text-subtle">
-                Нет данных. Загрузите Excel-файл на странице ИИ-Аналитик.
+                Нет данных. Загрузите Excel-файл на странице Аналитик.
               </div>
             ) : (
               <ResponsiveContainer>

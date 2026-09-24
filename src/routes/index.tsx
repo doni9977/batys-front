@@ -3,7 +3,9 @@ import { useEffect, useState, useRef } from "react";
 import { Search } from "lucide-react";
 import { PageHeader } from "../components/PageHeader";
 import { fetchRegistry, type RegistrySubject } from "../lib/api";
+import { getAuthToken } from "../lib/api";
 import { useDomainMeta } from "../lib/domain";
+import { RegistrationPage } from "./registration";
 import "leaflet/dist/leaflet.css";
 
 export const Route = createFileRoute("/")({
@@ -13,7 +15,7 @@ export const Route = createFileRoute("/")({
       { name: "description", content: "Интерактивная карта экономических рисков Западно-Казахстанской области" },
     ],
   }),
-  component: MapPage,
+  component: HomePage,
 });
 
 type Risk = "critical" | "warning" | "ok";
@@ -85,6 +87,26 @@ const buildMarkersFromRegistry = (subjects: RegistrySubject[]): MarkerData[] => 
   });
 };
 
+function HomePage() {
+  const [authenticated, setAuthenticated] = useState(() => Boolean(getAuthToken()));
+
+  useEffect(() => {
+    const syncAuth = () => setAuthenticated(Boolean(getAuthToken()));
+    window.addEventListener("batys-auth-changed", syncAuth);
+    window.addEventListener("storage", syncAuth);
+    return () => {
+      window.removeEventListener("batys-auth-changed", syncAuth);
+      window.removeEventListener("storage", syncAuth);
+    };
+  }, []);
+
+  if (!authenticated) {
+    return <RegistrationPage onAuthenticated={() => setAuthenticated(true)} />;
+  }
+
+  return <MapPage />;
+}
+
 function MapPage() {
   const navigate = useNavigate();
   const [isDark, setIsDark] = useState(true);
@@ -125,11 +147,12 @@ function MapPage() {
       mapRef.current = map;
       layerGroupRef.current = L.layerGroup().addTo(map);
 
-      const tileUrl = isDark
-        ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-        : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
+      const tileUrl = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
 
-      L.tileLayer(tileUrl, { maxZoom: 19 }).addTo(map);
+      L.tileLayer(tileUrl, { 
+        maxZoom: 19,
+        attribution: '© OpenStreetMap contributors'
+      }).addTo(map);
       renderMarkers(markers, L);
     })();
 
@@ -141,7 +164,7 @@ function MapPage() {
       }
       layerGroupRef.current = null;
     };
-  }, [isDark]);
+  }, []);
 
   const renderMarkers = (data: MarkerData[], L: any) => {
     if (!layerGroupRef.current || !mapRef.current) return;
@@ -190,7 +213,7 @@ function MapPage() {
         title="Карта рисков"
         subtitle="Западно-Казахстанская область · оперативный мониторинг"
         right={
-          <div className="relative w-[420px]">
+          <div className="relative w-[280px] max-w-[28vw]">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-subtle" />
             <input
               placeholder="Поиск по названию ТОО или БИН..."
@@ -200,8 +223,8 @@ function MapPage() {
         }
       />
 
-      <div className="relative h-[calc(100vh-89px)] w-full">
-        <div id="risk-map" className="absolute inset-0 cyber-grid" />
+      <div className="relative h-[calc(100vh-92px)] w-full overflow-hidden">
+        <div id="risk-map" className="absolute inset-0 cyber-grid z-0" />
 
       </div>
     </>

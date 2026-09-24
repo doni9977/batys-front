@@ -27,30 +27,30 @@ export function PageHeader({
   };
 
   return (
-    <div className="flex items-end justify-between gap-4 border-b border-border bg-background/80 px-8 py-4 backdrop-blur">
-      <div>
-        <h1 className="text-xl font-semibold tracking-tight text-heading">{title}</h1>
-        {subtitle && <p className="mt-0.5 text-sm text-subtle">{subtitle}</p>}
+    <div className="grid h-[92px] min-w-0 shrink-0 grid-cols-[minmax(180px,1fr)_minmax(0,auto)] items-center gap-3 overflow-hidden border-b border-border bg-background/80 px-6 py-3 backdrop-blur">
+      <div className="min-w-0">
+        <h1 className="text-lg font-semibold leading-tight tracking-tight text-heading">{title}</h1>
+        {subtitle && <p className="mt-1 line-clamp-2 text-xs leading-tight text-subtle">{subtitle}</p>}
       </div>
       
-      <div className="flex items-center gap-6">
+      <div className="flex min-w-0 max-w-full items-center justify-end gap-3 overflow-hidden">
         {right}
 
         {/* Separator if right content exists */}
         {right && <div className="h-8 w-px bg-border" />}
 
         {/* Global Header Controls (Profile, Settings, Theme) */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
           <DomainSwitcher />
           
           <button 
             onClick={toggleTheme}
-            className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-surface text-subtle transition-colors hover:bg-surface-2 hover:text-heading"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-surface text-subtle transition-colors hover:bg-surface-2 hover:text-heading"
           >
             {isDark ? <Sun size={18} /> : <Moon size={18} />}
           </button>
           
-          <button className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-surface text-subtle transition-colors hover:bg-surface-2 hover:text-heading">
+          <button className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-surface text-subtle transition-colors hover:bg-surface-2 hover:text-heading">
             <Settings size={18} />
           </button>
 

@@ -39,7 +39,7 @@ export function DomainSwitcher() {
   ];
 
   return (
-    <div className="flex items-stretch gap-2">
+    <div className="flex shrink-0 items-stretch gap-1">
       {domains.map((d) => {
         const Icon = d.icon;
         const isActive = domain === d.id;
@@ -47,23 +47,23 @@ export function DomainSwitcher() {
           <button
             key={d.id}
             onClick={() => setDomain(d.id)}
-            className={`relative flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition-all duration-200 ${
+            className={`relative flex items-center gap-2 rounded-xl border px-3 py-2 text-left transition-all duration-200 ${
               isActive ? d.active : d.idle
             }`}
           >
             {isActive && (
               <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-current opacity-80 shadow-[0_0_6px_currentColor]" />
             )}
-            <span className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg border ${
+            <span className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg border ${
               isActive ? "border-current/30 bg-current/10" : "border-border bg-surface-2"
             }`}>
               <Icon className="h-4 w-4" />
             </span>
             <div>
-              <p className={`text-sm font-semibold leading-tight ${isActive ? "" : "text-body"}`}>
+              <p className={`whitespace-nowrap text-xs font-semibold leading-tight ${isActive ? "" : "text-body"}`}>
                 {d.label}
               </p>
-              <p className={`text-xs leading-tight ${isActive ? "opacity-70" : "text-subtle"}`}>
+              <p className={`whitespace-nowrap text-[10px] leading-tight ${isActive ? "opacity-70" : "text-subtle"}`}>
                 {d.sub}
               </p>
             </div>
