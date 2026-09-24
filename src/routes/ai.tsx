@@ -170,20 +170,27 @@ function AiPage() {
 
       if (jobId) {
         setUploadStatus("running");
-        const job = await checkJobStatus(jobId);
 
-        if (job.status === "done") {
-          const response = await fetchRisks(selectedIndicator, jobId);
-          setRisks(response.risks ?? []);
-          setUploadStatus("done");
-          return;
+        for (let attempt = 0; attempt < 120; attempt += 1) {
+          const job = await checkJobStatus(jobId);
+
+          if (job.status === "done") {
+            const response = await fetchRisks(selectedIndicator, jobId);
+            setRisks(response.risks ?? []);
+            setUploadStatus("done");
+            return;
+          }
+
+          if (job.status === "failed") {
+            setUploadStatus("error");
+            setUploadError(job.error_message || "Ошибка расчета рисков");
+            return;
+          }
+
+          await new Promise((resolve) => window.setTimeout(resolve, 2000));
         }
 
-        if (job.status === "failed") {
-          setUploadStatus("error");
-          setUploadError(job.error_message || "Ошибка расчета рисков");
-          return;
-        }
+        throw new Error("Обработка файла занимает слишком много времени");
       }
 
       setUploadStatus("done");
