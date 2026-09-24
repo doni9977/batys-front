@@ -107,11 +107,10 @@ function MapPage() {
       mapRef.current = map;
       layerGroupRef.current = L.layerGroup().addTo(map);
 
-      const tileUrl = isDark
-        ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-        : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
+      // Используем бесплатные карты OpenStreetMap, которые не требуют API-ключа и не имеют срока действия (не истекают)
+      const tileUrl = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
 
-      L.tileLayer(tileUrl, { maxZoom: 19 }).addTo(map);
+      L.tileLayer(tileUrl, { maxZoom: 19, attribution: "&copy; OpenStreetMap contributors" }).addTo(map);
       renderMarkers(markers, L);
     })();
 
