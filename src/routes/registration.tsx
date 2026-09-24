@@ -1,6 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Eye, EyeOff, KeyRound, Lock, User, UserPlus } from "lucide-react";
 import { FormEvent, useState } from "react";
+import { login } from "../lib/api";
 
 export const Route = createFileRoute("/registration")({
   head: () => ({
@@ -9,16 +10,33 @@ export const Route = createFileRoute("/registration")({
       { name: "description", content: "Защищённый вход в цифровую карту экономических рисков" },
     ],
   }),
-  component: RegistrationPage,
+  component: RegistrationRoutePage,
 });
 
-function RegistrationPage() {
+function RegistrationRoutePage() {
+  const navigate = useNavigate();
+  return <RegistrationPage onAuthenticated={() => navigate({ to: "/" })} />;
+}
+
+export function RegistrationPage({ onAuthenticated }: { onAuthenticated: () => void }) {
   const [showPassword, setShowPassword] = useState(false);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState("");
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setMessage("Заявка принята. Доступ предоставляется системным администратором.");
+    try {
+      setIsSubmitting(true);
+      setMessage("");
+      await login(username, password);
+      onAuthenticated();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Не удалось выполнить вход");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -43,7 +61,15 @@ function RegistrationPage() {
             <span>Логин / ИИН сотрудника</span>
             <div className="registration-input-wrap">
               <User aria-hidden="true" />
-              <input type="text" inputMode="numeric" autoComplete="username" placeholder="000000000000" required />
+              <input
+                type="text"
+                inputMode="text"
+                autoComplete="username"
+                placeholder="admin"
+                value={username}
+                onChange={(event) => setUsername(event.target.value)}
+                required
+              />
             </div>
           </label>
 
@@ -55,6 +81,8 @@ function RegistrationPage() {
                 type={showPassword ? "text" : "password"}
                 autoComplete="current-password"
                 placeholder="Введите пароль"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
                 required
               />
               <button
@@ -69,9 +97,9 @@ function RegistrationPage() {
             </div>
           </label>
 
-          <button type="submit" className="registration-submit">
+          <button type="submit" className="registration-submit" disabled={isSubmitting}>
             <KeyRound aria-hidden="true" />
-            Войти в систему
+            {isSubmitting ? "Проверка..." : "Войти в систему"}
           </button>
 
           <button type="button" className="registration-help" onClick={() => setMessage("Для восстановления доступа обратитесь к системному администратору.")}>

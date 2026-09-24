@@ -3,7 +3,8 @@ import { useEffect, useState, useRef } from "react";
 import { Search } from "lucide-react";
 import "leaflet/dist/leaflet.css";
 import { PageHeader } from "../components/PageHeader";
-import { fetchRisks, type RiskRecord } from "../lib/api";
+import { fetchRisks, getAuthToken, type RiskRecord } from "../lib/api";
+import { RegistrationPage } from "./registration";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -12,7 +13,7 @@ export const Route = createFileRoute("/")({
       { name: "description", content: "Интерактивная карта экономических рисков Западно-Казахстанской области" },
     ],
   }),
-  component: MapPage,
+  component: HomePage,
 });
 
 type Risk = "critical" | "warning" | "ok";
@@ -74,6 +75,16 @@ const buildClinicMarkers = (risks: RiskRecord[]): MarkerData[] => {
     };
   });
 };
+
+function HomePage() {
+  const [authenticated, setAuthenticated] = useState(() => Boolean(getAuthToken()));
+
+  if (!authenticated) {
+    return <RegistrationPage onAuthenticated={() => setAuthenticated(true)} />;
+  }
+
+  return <MapPage />;
+}
 
 function MapPage() {
   const navigate = useNavigate();

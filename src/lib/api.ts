@@ -1,5 +1,13 @@
 import { apiUrl } from "./config";
 
+const AUTH_TOKEN_KEY = "batys-auth-token";
+
+export type LoginResponse = {
+  status: "success";
+  token: string;
+  username: string;
+};
+
 export type UploadResponse = {
   status: "success" | "error";
   message: string;
@@ -79,11 +87,53 @@ export type RegistryResponse = {
   }>;
 };
 
+export const getAuthToken = () => {
+  try {
+    return localStorage.getItem(AUTH_TOKEN_KEY);
+  } catch {
+    return null;
+  }
+};
+
+export const setAuthToken = (token: string) => {
+  localStorage.setItem(AUTH_TOKEN_KEY, token);
+};
+
+export const clearAuthToken = () => {
+  localStorage.removeItem(AUTH_TOKEN_KEY);
+};
+
+export const isAuthenticated = () => Boolean(getAuthToken());
+
+export const login = async (username: string, password: string): Promise<LoginResponse> => {
+  const response = await fetch(apiUrl("/api/auth/login"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, password }),
+  });
+
+  if (!response.ok) {
+    const payload = (await response.json().catch(() => null)) as { error?: string } | null;
+    throw new Error(payload?.error || "Не удалось выполнить вход");
+  }
+
+  const result = (await response.json()) as LoginResponse;
+  setAuthToken(result.token);
+  return result;
+};
+
+const authenticatedFetch = (input: RequestInfo | URL, init: RequestInit = {}) => {
+  const headers = new Headers(init.headers);
+  const token = getAuthToken();
+  if (token) headers.set("Authorization", `Bearer ${token}`);
+  return fetch(input, { ...init, headers });
+};
+
 export const uploadFile = async (file: File): Promise<UploadResponse> => {
   const formData = new FormData();
   formData.append("file", file);
 
-  const response = await fetch(apiUrl("/api/upload"), {
+  const response = await authenticatedFetch(apiUrl("/api/upload"), {
     method: "POST",
     body: formData,
   });
@@ -97,7 +147,7 @@ export const uploadFile = async (file: File): Promise<UploadResponse> => {
 };
 
 export const checkJobStatus = async (jobId: number): Promise<RiskJobStatus> => {
-  const response = await fetch(apiUrl(`/api/risk-jobs/${jobId}`));
+  const response = await authenticatedFetch(apiUrl(`/api/risk-jobs/${jobId}`));
 
   if (!response.ok) {
     const errorText = await response.text();
@@ -113,7 +163,7 @@ export const fetchAnalytics = async (domain: string): Promise<AnalyticsResponse>
     throw new Error("Не выбран домен аналитики");
   }
 
-  const response = await fetch(apiUrl(`/api/analytics?domain=${encodeURIComponent(normalizedDomain)}`));
+  const response = await authenticatedFetch(apiUrl(`/api/analytics?domain=${encodeURIComponent(normalizedDomain)}`));
   if (!response.ok) {
     const errorText = await response.text();
     throw new Error(errorText || "Failed to fetch analytics");
@@ -128,7 +178,7 @@ export const fetchRegistry = async (domain: string): Promise<RegistryResponse> =
     throw new Error("Не выбран домен реестра");
   }
 
-  const response = await fetch(apiUrl(`/api/registry?domain=${encodeURIComponent(normalizedDomain)}`));
+  const response = await authenticatedFetch(apiUrl(`/api/registry?domain=${encodeURIComponent(normalizedDomain)}`));
   if (!response.ok) {
     const errorText = await response.text();
     throw new Error(errorText || "Failed to fetch registry");
@@ -153,7 +203,7 @@ export const fetchRisks = async (
   if (options?.limit) params.set("limit", String(options.limit));
   const query = params.toString();
   const url = apiUrl(`/api/risks/${normalizedIndicator}${query ? `?${query}` : ""}`);
-  const response = await fetch(url);
+  const response = await authenticatedFetch(url);
 
   if (!response.ok) {
     const errorText = await response.text();
