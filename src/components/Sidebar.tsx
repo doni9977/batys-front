@@ -8,6 +8,7 @@ import {
   Download,
   ShieldCheck,
   Menu,
+  UserPlus,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -21,6 +22,7 @@ const mainNav: NavItem[] = [
 ];
 
 const sysNav: NavItem[] = [
+  { to: "/registration", label: "Регистрация доступа", icon: UserPlus },
   { to: "/access", label: "Управление доступами", icon: Settings },
   { to: "/integrations", label: "Интеграции", icon: Download },
 ];
