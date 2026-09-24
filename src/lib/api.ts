@@ -97,10 +97,12 @@ export const getAuthToken = () => {
 
 export const setAuthToken = (token: string) => {
   localStorage.setItem(AUTH_TOKEN_KEY, token);
+  window.dispatchEvent(new Event("batys-auth-changed"));
 };
 
 export const clearAuthToken = () => {
   localStorage.removeItem(AUTH_TOKEN_KEY);
+  window.dispatchEvent(new Event("batys-auth-changed"));
 };
 
 export const isAuthenticated = () => Boolean(getAuthToken());
