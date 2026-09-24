@@ -16,7 +16,8 @@ import {
   User,
 } from "lucide-react";
 import { PageHeader } from "../components/PageHeader";
-import { fetchRisks, uploadFile, checkJobStatus, type RiskRecord } from "../lib/api";
+import { fetchRisks, uploadFile, checkJobStatus, type RiskRecord, getAuthToken } from "../lib/api";
+import { apiUrl } from "../lib/config";
 
 export const Route = createFileRoute("/ai")({
   head: () => ({
@@ -358,7 +359,7 @@ function AiPage() {
 
             <div className="flex flex-wrap items-center gap-3">
               <a
-                href={`/api/export/report?indicator=${selectedIndicator}`}
+                href={apiUrl(`/api/export/report?indicator=${selectedIndicator}&token=${getAuthToken()}`)}
                 target="_blank"
                 rel="noreferrer"
                 className="group relative inline-flex items-center gap-2 overflow-hidden rounded-xl bg-slate-800 px-4 py-2 text-sm font-bold text-white shadow-lg shadow-slate-500/20 transition-all hover:bg-slate-700 dark:bg-white/10 dark:hover:bg-white/20"
