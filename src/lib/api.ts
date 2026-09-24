@@ -1,3 +1,5 @@
+import { apiUrl } from "./config";
+
 export type UploadResponse = {
   status: "success" | "error";
   message: string;
@@ -42,7 +44,7 @@ export const uploadFile = async (file: File): Promise<UploadResponse> => {
   const formData = new FormData();
   formData.append("file", file);
 
-  const response = await fetch("/api/upload", {
+  const response = await fetch(apiUrl("/api/upload"), {
     method: "POST",
     body: formData,
   });
@@ -56,7 +58,7 @@ export const uploadFile = async (file: File): Promise<UploadResponse> => {
 };
 
 export const checkJobStatus = async (jobId: number): Promise<RiskJobStatus> => {
-  const response = await fetch(`/api/risk-jobs/${jobId}`);
+  const response = await fetch(apiUrl(`/api/risk-jobs/${jobId}`));
 
   if (!response.ok) {
     const errorText = await response.text();
@@ -67,7 +69,9 @@ export const checkJobStatus = async (jobId: number): Promise<RiskJobStatus> => {
 };
 
 export const fetchRisks = async (indicator: string, jobId?: number): Promise<RisksResponse> => {
-  const url = jobId ? `/api/risks/${indicator}?job_id=${jobId}` : `/api/risks/${indicator}`;
+  const url = jobId
+    ? apiUrl(`/api/risks/${indicator}?job_id=${jobId}`)
+    : apiUrl(`/api/risks/${indicator}`);
   const response = await fetch(url);
 
   if (!response.ok) {
