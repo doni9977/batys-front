@@ -28,11 +28,10 @@ type MarkerData = {
   risk: Risk;
   debt?: string;
   note: string;
+  address?: string;
   lat: number;
   lng: number;
 };
-
-
 
 const RISK_COLOR: Record<Risk, string> = {
   critical: "critical",
@@ -40,12 +39,16 @@ const RISK_COLOR: Record<Risk, string> = {
   ok: "ok",
 };
 
-const CLINIC_COORDS: Record<string, {lat: number, lng: number}> = {
+const CLINIC_COORDS: Record<string, { lat: number; lng: number; address?: string }> = {
   'Филиал по Западно-Казахстанской области НАО «ФСМС»': { lat: 51.21852, lng: 51.38549 },
   'ГКП на праве хозяйственного ведения "Городская поликлиника №1" управления здравоохранения акимата Западно-Казахстанской области': { lat: 51.2110, lng: 51.3820 },
   'ГКП "Городская поликлиника №2" на праве хозяйственного ведения управления здравоохранения акимата Западно-Казахстанской области': { lat: 51.2155, lng: 51.4005 },
   'Акционерное общество "Талап"': { lat: 51.2446, lng: 51.4130 },
-  'ТОО "Uniserv Medical Center"': { lat: 51.2012, lng: 51.3503 },
+  'ТОО "Uniserv Medical Center"': {
+    lat: 51.2012,
+    lng: 51.3503,
+    address: "Западно-Казахстанская область, г. Уральск, ул. М. Шолохова, 36",
+  },
 };
 
 import { NR_COORDS } from "./nr_coords_export";
@@ -93,6 +96,7 @@ const buildMarkersFromRegistry = (subjects: RegistrySubject[], domainId: string)
       district: subject.district || "—",
       risk: riskLevel,
       note: `Нарушений: ${totalCount}. Сумма ущерба: ${totalAmount.toLocaleString()} ₸`,
+      address: coords.address,
       lat: coords.lat,
       lng: coords.lng,
     };
@@ -203,6 +207,7 @@ function MapPage() {
       marker.on("click", () => navigate({ to: "/registry" }));
 
       const shortName = m.name.length > 60 ? m.name.substring(0, 57) + "..." : m.name;
+      const addressText = m.address ? `<p class="text-[11px] leading-relaxed text-slate-300">${m.address}</p>` : "";
       const tooltipHtml = `
         <div style="max-width:280px;overflow:hidden;word-wrap:break-word;" class="space-y-2 p-1">
           <div class="flex items-start gap-2">
@@ -213,6 +218,7 @@ function MapPage() {
             </div>
           </div>
           <p class="text-xs leading-relaxed text-slate-300">${m.note}</p>
+          ${addressText}
         </div>
       `;
 
