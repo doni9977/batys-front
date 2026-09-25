@@ -246,6 +246,12 @@ function MapPage() {
     }
   };
 
+  const RISK_TAILWIND: Record<Risk, string> = {
+    critical: "bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.65)]",
+    warning: "bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.65)]",
+    ok: "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.65)]",
+  };
+
   return (
     <>
       <PageHeader
@@ -266,15 +272,15 @@ function MapPage() {
               className="w-full rounded-lg border border-border bg-surface pl-9 pr-3 py-2 text-sm text-foreground placeholder:text-subtle focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
             {showSuggestions && filteredMarkers.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-2 rounded-xl border border-border bg-surface p-1.5 shadow-2xl z-50 max-h-64 overflow-y-auto">
+              <div className="absolute top-full left-0 mt-2 min-w-[320px] w-full rounded-xl border border-border bg-surface p-1.5 shadow-2xl z-50 max-h-64 overflow-y-auto">
                 {filteredMarkers.map((m) => (
                   <button
                     key={m.id}
                     onClick={() => handleSelectMarker(m)}
                     className="flex w-full flex-col items-start gap-1 rounded-lg px-3 py-2 text-left transition-colors hover:bg-surface-2"
                   >
-                    <div className="flex items-center gap-2">
-                      <span className={`h-2 w-2 rounded-full risk-marker ${RISK_COLOR[m.risk]}`} />
+                    <div className="flex w-full items-center gap-2 overflow-hidden">
+                      <span className={`h-2 w-2 flex-shrink-0 rounded-full ${RISK_TAILWIND[m.risk]}`} />
                       <span className="truncate text-sm font-medium text-heading">{m.name}</span>
                     </div>
                     <span className="text-[11px] text-subtle font-mono pl-4">{m.bin}</span>
