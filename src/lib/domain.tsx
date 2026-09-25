@@ -54,6 +54,8 @@ export const DOMAIN_META = {
     activeColor: "bg-gradient-to-r from-cyan-500/20 to-blue-600/10 border-cyan-500/40",
     // UI aliases
     clinicLabel: "Клиника",
+    clinicLabelPlural: "клиник",
+    searchPlaceholder: "Поиск по услуге, клинике, врачу или пациенту...",
     doctorLabel: "Врач",
     iinLabel: "ИИН пациента",
     uploadLabel: "Загрузить Excel ОСМС",
@@ -77,6 +79,8 @@ export const DOMAIN_META = {
     activeColor: "bg-gradient-to-r from-violet-500/20 to-purple-600/10 border-violet-500/40",
     // UI aliases
     clinicLabel: "Компания",
+    clinicLabelPlural: "компаний",
+    searchPlaceholder: "Поиск по названию компании, БИН или руководителю...",
     doctorLabel: "Руководитель",
     iinLabel: "БИН компании",
     uploadLabel: "Загрузить реестр ЮЛ",
@@ -97,6 +101,8 @@ export const DOMAIN_META = {
     color: "from-emerald-500/20 to-green-500/10 border-emerald-500/30 text-emerald-400",
     activeColor: "bg-gradient-to-r from-emerald-500/20 to-green-600/10 border-emerald-500/40",
     clinicLabel: "Стационар",
+    clinicLabelPlural: "стационаров",
+    searchPlaceholder: "Поиск по стационару, МКБ-10, врачу или пациенту...",
     doctorLabel: "Врач",
     iinLabel: "Пациент",
     uploadLabel: "Загрузить файлы стационара",

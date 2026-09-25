@@ -448,7 +448,7 @@ function AiPage() {
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Поиск по услуге, клинике, врачу или пациенту..."
+              placeholder={meta.searchPlaceholder}
               className="w-full rounded-2xl border border-white/20 bg-white/60 py-3.5 pl-11 pr-4 text-sm font-medium text-slate-800 placeholder:text-slate-400 shadow-sm backdrop-blur-xl transition-all focus:border-cyan-500/50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-cyan-500/10 dark:border-white/10 dark:bg-black/40 dark:text-slate-200 dark:focus:bg-black/60"
             />
           </div>

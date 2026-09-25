@@ -234,14 +234,14 @@ function AnalyticsPage() {
           />
           <KpiCard
             icon={Building2}
-            label={`Уникальных ${meta.clinicLabel.toLowerCase()}`}
+            label={`Уникальных ${meta.clinicLabelPlural}`}
             value={isLoading ? "..." : String(kpi.unique_clinics)}
             sub="Организаций в данных"
             accent="text-cyan-400"
           />
           <KpiCard
             icon={ShieldAlert}
-            label={`Критических ${meta.clinicLabel.toLowerCase()}`}
+            label={`Критических ${meta.clinicLabelPlural}`}
             value={isLoading ? "..." : String(kpi.critical_clinics)}
             sub="Сумма ущерба > 5 млн ₸"
             accent="text-red-500"
@@ -379,7 +379,7 @@ function AnalyticsPage() {
           <section className="rounded-xl border border-border bg-surface p-5">
             <header className="mb-4 flex items-center justify-between">
               <div>
-                <h2 className="text-base font-semibold text-heading">Топ {meta.clinicLabel.toLowerCase()} по сумме ущерба</h2>
+                <h2 className="text-base font-semibold text-heading">Топ {meta.clinicLabelPlural} по сумме ущерба</h2>
                 <p className="text-xs text-subtle">Ранжирование по сумме выявленных нарушений</p>
               </div>
               <div className="flex items-center gap-1.5">
