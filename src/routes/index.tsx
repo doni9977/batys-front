@@ -52,9 +52,15 @@ const CLINIC_COORDS: Record<string, { lat: number; lng: number; address?: string
 };
 
 import { NR_COORDS } from "./nr_coords_export";
+import DYNAMIC_COORDS from "../assets/clinic_coords.json";
 
 const clinicCoordinates = (clinicName: string) => {
-  // Координаты стационаров
+  // Динамические геокодированные координаты (самые приоритетные)
+  if ((DYNAMIC_COORDS as Record<string, any>)[clinicName]) {
+    return (DYNAMIC_COORDS as Record<string, any>)[clinicName];
+  }
+
+  // Координаты стационаров (хардкод)
   if (CLINIC_COORDS[clinicName]) {
     return CLINIC_COORDS[clinicName];
   }
