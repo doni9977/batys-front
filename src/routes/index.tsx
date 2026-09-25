@@ -57,15 +57,41 @@ import DYNAMIC_COORDS from "../assets/clinic_coords.json";
 // В Vite/Webpack JSON импортируется безопасно, если он есть.
 import NR_DYNAMIC_COORDS from "../assets/nr_coords_yandex.json";
 
-const clinicCoordinates = (clinicName: string) => {
+const normalizeClinicName = (name: string) =>
+  name
+    .toLocaleLowerCase()
+    .replace(/(товарищество с ограниченной ответственностью|акционерное общество|государственное коммунальное предприятие|тоо|тoo|ао|гкп)/gu, "")
+    .replace(/(медицинский центр|медицинская организация|медцентр|клиника|поликлиника|больница|medical center|clinic|hospital)/gu, "")
+    .replace(/["«»“”„]/gu, "")
+    .replace(/[^\p{L}\p{N}]/gu, "");
+
+const clinicCoordinates = (clinicName: string, domainId: string) => {
   // Динамические координаты нерезидентов (от Яндекс Геокодера)
   if ((NR_DYNAMIC_COORDS as Record<string, any>)[clinicName]) {
     return (NR_DYNAMIC_COORDS as Record<string, any>)[clinicName];
   }
 
   // Динамические координаты поликлиник/стационаров (от Яндекс Организаций)
-  if ((DYNAMIC_COORDS as Record<string, any>)[clinicName]) {
-    return (DYNAMIC_COORDS as Record<string, any>)[clinicName];
+  const dynamicCoordinates = DYNAMIC_COORDS as Record<string, any>;
+  const isUsableAddress = (coords: any) =>
+    coords &&
+    (domainId !== "inpatient" ||
+      (coords.address && !String(coords.address).startsWith("г. Уральск (")));
+  if (isUsableAddress(dynamicCoordinates[clinicName])) {
+    return dynamicCoordinates[clinicName];
+  }
+  const normalizedName = normalizeClinicName(clinicName);
+  const matchedCoordinates = Object.entries(dynamicCoordinates).find(
+    ([savedName, coords]) =>
+      normalizeClinicName(savedName) === normalizedName && isUsableAddress(coords),
+  )?.[1];
+  if (matchedCoordinates) {
+    return matchedCoordinates;
+  }
+
+  // Для стационара без подтверждённой записи 2GIS не используем приблизительные координаты.
+  if (domainId === "inpatient") {
+    return null;
   }
 
   // Координаты стационаров (старый хардкод)
@@ -82,6 +108,7 @@ const clinicCoordinates = (clinicName: string) => {
   if (NR_COORDS[clinicName]) {
     return NR_COORDS[clinicName];
   }
+
 
   // Для ОСМС и остальных: генерируем статические "разбросанные" точки
   const seed = clinicName.split("").reduce((sum, ch) => sum + ch.charCodeAt(0), 0);
@@ -106,7 +133,8 @@ const buildMarkersFromRegistry = (subjects: RegistrySubject[], domainId: string)
       else riskLevel = "ok";
     }
 
-    const coords = clinicCoordinates(subject.clinic_name);
+    const coords = clinicCoordinates(subject.clinic_name, domainId);
+    if (!coords) return null;
 
     return {
       id: `${subject.clinic_name}-${index}`,
@@ -119,7 +147,7 @@ const buildMarkersFromRegistry = (subjects: RegistrySubject[], domainId: string)
       lat: coords.lat,
       lng: coords.lng,
     };
-  });
+  }).filter((marker): marker is MarkerData => marker !== null);
 };
 
 function HomePage() {

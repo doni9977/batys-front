@@ -70,12 +70,19 @@ function fmt(n: number) {
 
 // Экспорт CSV
 function exportCsv(subjects: RegistrySubject[], domainId: string) {
-  const header = ["#", "Название", "БИН", "Район", "Уровень риска", "Сумма ущерба (₸)", "Нарушений"];
+  const isNonResident = domainId === "nr";
+  const header = [
+    "#",
+    "Название",
+    ...(isNonResident ? ["БИН", "Район"] : []),
+    "Уровень риска",
+    "Сумма ущерба (₸)",
+    "Нарушений",
+  ];
   const rows = subjects.map((s, i) => [
     i + 1,
     `"${s.clinic_name}"`,
-    "-",
-    "-",
+    ...(isNonResident ? [s.bin || "-", s.district || "-"] : []),
     RISK_META[getRiskLevel(s.total_amount, s.total_risks, domainId)].label,
     s.total_amount.toFixed(2),
     s.total_risks,
@@ -93,6 +100,7 @@ function exportCsv(subjects: RegistrySubject[], domainId: string) {
 // ─── компонент ──────────────────────────────────────────────────────────────
 function RegistryPage() {
   const meta = useDomainMeta();
+  const showCompanyDetails = meta.id === "nr";
   const [q, setQ] = useState("");
   const [page, setPage] = useState(1);
   const [subjects, setSubjects] = useState<RegistrySubject[]>([]);
@@ -209,8 +217,12 @@ function RegistryPage() {
                 <tr>
                   <th className="w-12 border-r border-border py-4 text-center font-medium">#</th>
                   <th className="border-r border-border px-4 py-4 font-medium">{meta.clinicLabel}</th>
-                  <th className="border-r border-border px-4 py-4 font-medium">{meta.iinLabel}</th>
-                  <th className="border-r border-border px-4 py-4 font-medium">Район</th>
+                  {showCompanyDetails ? (
+                    <>
+                      <th className="border-r border-border px-4 py-4 font-medium">{meta.iinLabel}</th>
+                      <th className="border-r border-border px-4 py-4 font-medium">Район</th>
+                    </>
+                  ) : null}
                   <th className="border-r border-border px-4 py-4 font-medium">Уровень риска</th>
                   <th className="border-r border-border px-4 py-4 font-medium">Сумма ущерба</th>
                   <th className="px-4 py-4 font-medium">Нарушений</th>
@@ -220,7 +232,7 @@ function RegistryPage() {
               <tbody>
                 {isLoading ? (
                   <tr>
-                    <td colSpan={8} className="px-6 py-14 text-center text-subtle">
+                    <td colSpan={showCompanyDetails ? 8 : 6} className="px-6 py-14 text-center text-subtle">
                       <span className="inline-flex items-center gap-2">
                         <Building2 className="h-5 w-5 animate-pulse" />
                         Загрузка реестра...
@@ -229,7 +241,7 @@ function RegistryPage() {
                   </tr>
                 ) : slice.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="px-6 py-14 text-center text-subtle">
+                    <td colSpan={showCompanyDetails ? 8 : 6} className="px-6 py-14 text-center text-subtle">
                       {q ? "Ничего не найдено по вашему запросу." : "Реестр пуст. Загрузите Excel-файл на странице Аналитик."}
                     </td>
                   </tr>
@@ -253,14 +265,16 @@ function RegistryPage() {
                             <span className="truncate">{row.clinic_name}</span>
                           </div>
                         </td>
-                        {/* БИН */}
-                        <td className="border-r border-border px-4 py-4 font-mono text-subtle">
-                          {row.bin || "—"}
-                        </td>
-                        {/* Район */}
-                        <td className="border-r border-border px-4 py-4 text-subtle">
-                          {row.district || "—"}
-                        </td>
+                        {showCompanyDetails ? (
+                          <>
+                            <td className="border-r border-border px-4 py-4 font-mono text-subtle">
+                              {row.bin || "—"}
+                            </td>
+                            <td className="border-r border-border px-4 py-4 text-subtle">
+                              {row.district || "—"}
+                            </td>
+                          </>
+                        ) : null}
                         {/* Уровень риска */}
                         <td className="border-r border-border px-4 py-4">
                           <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium ${m.badge}`}>
