@@ -53,16 +53,29 @@ const CLINIC_COORDS: Record<string, { lat: number; lng: number; address?: string
 
 import { NR_COORDS } from "./nr_coords_export";
 import DYNAMIC_COORDS from "../assets/clinic_coords.json";
+// Используем try-catch логику или просто импорт, предполагая что файл существует.
+// В Vite/Webpack JSON импортируется безопасно, если он есть.
+import NR_DYNAMIC_COORDS from "../assets/nr_coords_yandex.json";
 
 const clinicCoordinates = (clinicName: string) => {
-  // Динамические геокодированные координаты (самые приоритетные)
+  // Динамические координаты нерезидентов (от Яндекс Геокодера)
+  if ((NR_DYNAMIC_COORDS as Record<string, any>)[clinicName]) {
+    return (NR_DYNAMIC_COORDS as Record<string, any>)[clinicName];
+  }
+
+  // Динамические координаты поликлиник/стационаров (от Яндекс Организаций)
   if ((DYNAMIC_COORDS as Record<string, any>)[clinicName]) {
     return (DYNAMIC_COORDS as Record<string, any>)[clinicName];
   }
 
-  // Координаты стационаров (хардкод)
+  // Координаты стационаров (старый хардкод)
   if (CLINIC_COORDS[clinicName]) {
     return CLINIC_COORDS[clinicName];
+  }
+
+  // Координаты нерезидентов (старый экспорт)
+  if (NR_COORDS[clinicName]) {
+    return NR_COORDS[clinicName];
   }
 
   // Координаты нерезидентов
